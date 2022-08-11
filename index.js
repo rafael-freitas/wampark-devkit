@@ -96,8 +96,8 @@ export function startEngine (routes, options = {}) {
       join(__dirname, 'routes/ui.routes.navlistLeft.onSelect.js'),
 
       // HTTP upload routes
-      join(__dirname, 'engine/http/routes/download/index.js'),
-      join(__dirname, 'engine/http/routes/upload/index.js'),
+      join(__dirname, 'http/routes/download/index.js'),
+      join(__dirname, 'http/routes/upload/index.js'),
     ])
   }
 // ----------- AUTOLOAD ROUTES ----------
