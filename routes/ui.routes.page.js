@@ -20,8 +20,12 @@ export default class UiComponent extends app.Route {
     // layout -------------------
 
     const viewport = this.clientApplication.component('#viewport')
+
+    viewport.method('addHotkeys', 'ctrl+s, command+s', {
+      endpoint: 'ui.routes.toolbar.save'
+    })
     
-    viewport.method('updateLayoutOptions', {
+    viewport.method('updateProps', {
       labelPosition: 'top',
       labelWidth: 'auto'
     })
@@ -40,9 +44,6 @@ export default class UiComponent extends app.Route {
     // configure layout ------------------
 
     const layout = this.clientApplication.component('#pageLayout')
-    // layout.method('updateState', {
-    //   title: 'Routes updated'
-    // })
 
     layout.method('addComponent', {
       slot: 'left',
