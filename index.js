@@ -7,7 +7,7 @@ import webserver from './lib/webserver/koa.js'
 import importRoute from './lib/importRoute.js'
 import createMongoFieldSearchQuery from './lib/db/createMongoFieldSearchQuery.js'
 import parseISODateToDateObject from './lib/db/parseISODateToDateObject.js'
-import { createReadStreamFromBuffer, getBufferFromStream } from './lib/db/streaming.js'
+import { createReadStreamFromBuffer, getBufferFromStream } from './lib/streaming.js'
 
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
