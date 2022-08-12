@@ -8,6 +8,8 @@ import importRoute from './lib/importRoute.js'
 import createMongoFieldSearchQuery from './lib/db/createMongoFieldSearchQuery.js'
 import parseISODateToDateObject from './lib/db/parseISODateToDateObject.js'
 import { createReadStreamFromBuffer, getBufferFromStream } from './lib/streaming.js'
+import Routes from './db/models/routes/index.js'
+import SystemUsers from './db/models/system_users/index.js'
 
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -58,6 +60,11 @@ if (process.env.HTTP_ENABLE) {
 
 export default app
 
+export const models = {
+  Routes,
+  SystemUsers,
+}
+
 export const lib = {
   db: {
     createMongoFieldSearchQuery,
@@ -66,7 +73,7 @@ export const lib = {
   stream: {
     createReadStreamFromBuffer,
     getBufferFromStream
-  }
+  },
 }
 /**
  * Init routes for application
