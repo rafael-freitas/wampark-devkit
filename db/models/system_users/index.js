@@ -59,7 +59,10 @@ const systemUserModel = Object.assign({
    */
    [process.env.MODEL_SYSTEM_USER__CODE]: {
     unique: true,
-    type: Number
+    type: Number,
+    default: () => {
+      return Date.now()
+    }
   },
 
   /**
