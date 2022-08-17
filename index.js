@@ -6,6 +6,7 @@ import db from './lib/db/index.js'
 import webserver from './lib/webserver/koa.js'
 import importRoute from './lib/importRoute.js'
 import createMongoFieldSearchQuery from './lib/db/createMongoFieldSearchQuery.js'
+import generateQuery from './lib/db/queryGenerator.js'
 import parseISODateToDateObject from './lib/db/parseISODateToDateObject.js'
 import { createReadStreamFromBuffer, getBufferFromStream } from './lib/streaming.js'
 import Routes from './db/models/routes/index.js'
@@ -68,7 +69,8 @@ export const models = {
 export const lib = {
   db: {
     createMongoFieldSearchQuery,
-    parseISODateToDateObject
+    parseISODateToDateObject,
+    ...generateQuery
   },
   stream: {
     createReadStreamFromBuffer,
