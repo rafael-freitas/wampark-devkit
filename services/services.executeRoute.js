@@ -1,5 +1,4 @@
 import app from 'wampark'
-import crypto from 'crypto'
 import shell from 'shelljs'
 import path from 'path'
 import fs from 'fs'
@@ -24,11 +23,6 @@ const SNIPPET_RETURN_NAME = 'processFlowResult'
 const SNIPPET_ERROR_HANDLER_NAME = 'RoutesErrorHandler'
 const SNIPPET_CATCH_NAME = 'catch'
 
-function requireUncached (module) {
-  delete require.cache[require.resolve(module)]
-  return require(module)
-}
-
 export default class ExecuteRoutesRoute extends app.Route {
   constructor () {
     super({
@@ -48,7 +42,6 @@ export default class ExecuteRoutesRoute extends app.Route {
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
     this.details = details
-    console.log('args', args)
     const routeId = this.routeId()
 
     const route = await Routes.findOne({ _id: routeId }).lean()
@@ -157,7 +150,7 @@ export default class ExecuteRoutesRoute extends app.Route {
       ].join('\n '),
       '\n*/',
       '\n',
-      `\nimport app from 'wampark'`,
+      // `\nimport app from 'wampark'`,
       '\n',
       route.header || '',
       '\n',

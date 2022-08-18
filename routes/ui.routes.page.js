@@ -134,7 +134,7 @@ export default class UiComponent extends app.Route {
       component: 'i-code',
       id: 'inputContent',
       name: 'content',
-      label: 'Content',
+      label: 'export default async function content ({kwargs})',
     })
 
     // toolbar ---------------------
@@ -142,21 +142,9 @@ export default class UiComponent extends app.Route {
     layout.method('addComponent', {
       slot: 'toolbar',
       component: 'i-button',
-      name: 'btnNew',
-      label: 'New item',
-      events: [
-        {
-          on: 'click',
-          target: 'server',
-          endpoint: 'ui.routes.toolbar.new'
-        }
-      ]
-    })
-    layout.method('addComponent', {
-      slot: 'toolbar',
-      component: 'i-button',
       name: 'btnSave',
       label: 'Save',
+      type: 'primary',
       events: [
         {
           on: 'click',
@@ -165,11 +153,30 @@ export default class UiComponent extends app.Route {
         }
       ]
     })
+
+    layout.method('addComponent', {
+      slot: 'toolbar',
+      component: 'i-button',
+      name: 'btnNew',
+      label: 'New item',
+      type: 'success',
+      plain: true,
+      events: [
+        {
+          on: 'click',
+          target: 'server',
+          endpoint: 'ui.routes.toolbar.new'
+        }
+      ]
+    })
+
     layout.method('addComponent', {
       slot: 'toolbar',
       component: 'i-button',
       name: 'btnDelete',
       label: 'Delete',
+      type: 'danger',
+      plain: true,
       events: [
         {
           on: 'click',
@@ -184,6 +191,8 @@ export default class UiComponent extends app.Route {
       component: 'i-button',
       name: 'btnExecute',
       label: 'Execute',
+      type: 'info',
+      plain: true,
       events: [
         {
           on: 'click',
@@ -198,6 +207,8 @@ export default class UiComponent extends app.Route {
       component: 'i-button',
       name: 'btnExport',
       label: 'Export',
+      type: 'primary',
+      plain: true,
       events: [
         {
           on: 'click',
@@ -212,6 +223,8 @@ export default class UiComponent extends app.Route {
       component: 'i-button',
       name: 'btnImport',
       label: 'Import',
+      type: 'primary',
+      plain: true,
       events: [
         {
           on: 'click',
