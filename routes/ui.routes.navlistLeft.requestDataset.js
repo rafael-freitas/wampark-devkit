@@ -1,6 +1,6 @@
 import app from 'wampark'
 import Routes from '../db/models/routes/index.js'
-import createMongoSearchQuery from '../db/mongoSearchQuery.js'
+import {createMongoFieldSearchQueryAnd} from '../lib/db/createMongoFieldSearchQuery.js'
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -27,7 +27,7 @@ export default class UiComponent extends app.Route {
     let queryObject = {}
 
     if (query) {
-      queryObject = createMongoSearchQuery('_id', query)
+      queryObject = createMongoFieldSearchQueryAnd('_id', query)
     }
 
     const resultset = await Routes.findByAggregate(queryObject, {}, {
