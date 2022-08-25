@@ -86,20 +86,19 @@ export function startEngine (routes, options = {}) {
   if (!Array.isArray(routes.autoload)) {
     routes.autoload = []
   }
-  if (options.ENABLE_ROUTES_EXECUTE_ENDPOINT || process.env.ENABLE_ROUTES_EXECUTE_ENDPOINT) {
+  if (options.ENABLE_ROUTES_EXECUTE_ENDPOINT || Number(process.env.ENABLE_ROUTES_EXECUTE_ENDPOINT)) {
     executeRoutesEnabled = true
     routes.autoload = routes.autoload.concat([
       join(__dirname, 'services/services.executeRoute.js'),
     ])
   }
-  if (options.ENABLE_AUTHENTICATION_ENDPOINT || process.env.ENABLE_AUTHENTICATION_ENDPOINT) {
-    executeRoutesEnabled = true
+  if (options.ENABLE_AUTHENTICATION_ENDPOINT || Number(process.env.ENABLE_AUTHENTICATION_ENDPOINT)) {
     routes.autoload = routes.autoload.concat([
       join(__dirname, 'services/services.authenticate.ticket.js'),
       join(__dirname, 'services/services.authorizer.js'),
     ])
   }
-  if (options.ENABLE_ROUTES_UI_ENDPOINT || process.env.ENABLE_ROUTES_UI_ENDPOINT) {
+  if (options.ENABLE_ROUTES_UI_ENDPOINT || Number(process.env.ENABLE_ROUTES_UI_ENDPOINT)) {
     if (!executeRoutesEnabled) {
       throw new app.ApplicationError('DEVKIT001: ENABLE_ROUTES_EXECUTE_ENDPOINT must be enabled')
     }

@@ -12,7 +12,7 @@ const RoutesError = app.ApplicationError
 // generate random WORKER ID wether no ID is specified
 const ROUTES_WORKER_ID = app.config.ROUTES_WORKER_ID || process.pid
 // const ROUTES_URI = 'routes.' + ROUTES_WORKER_ID
-const ROUTES_URI = 'routes'
+const ROUTES_URI = app.config.ROUTES_URI || 'routes'
 
 const SNIPPET_CONTENT_PREFIX = 'content_'
 const SNIPPET_CATCH_ERROR_PREFIX = 'catch_'

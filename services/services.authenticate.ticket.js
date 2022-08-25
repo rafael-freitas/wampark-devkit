@@ -30,6 +30,8 @@ const { isEmpty } = lodash
 const { Route, RouteTypes, ApplicationError } = app
 const { JWT_SALT } = process.env
 const USER_PASSWORD_FIELDNAME = process.env.MODEL_SYSTEM_USER__PASSOWRD
+const USER_IDENTIFIER_FIELDNAME = process.env.USER_IDENTIFIER_FIELDNAME
+const USER_EMAIL_FIELDNAME = process.env.USER_EMAIL_FIELDNAME
 
 
 // assets
@@ -183,7 +185,7 @@ export default class ServiceTicketAuthentication extends Route {
   createWebToken ({ authid, ticket, user } = {}) {
     if (isEmpty(user) || isEmpty(ticket)) throw new ApplicationError('AUTHTD001: arg deve conter os objetos user e credentials')
 
-    const token = jwt.sign({ user: user.identifier, email: user.email }, JWT_SALT)
+    const token = jwt.sign({ user: user[USER_IDENTIFIER_FIELDNAME], email: useruser[USER_EMAIL_FIELDNAME] }, JWT_SALT)
     ticket.token = token
     return { user, authid, ticket }
   }
