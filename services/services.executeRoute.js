@@ -11,8 +11,8 @@ const RoutesError = app.ApplicationError
 
 // generate random WORKER ID wether no ID is specified
 const ROUTES_WORKER_ID = app.config.ROUTES_WORKER_ID || process.pid
-// const ROUTES_URI = 'routes.' + ROUTES_WORKER_ID
-const ROUTES_URI = app.config.ROUTES_URI || 'routes'
+// const ROUTES_PREFIX = 'routes.' + ROUTES_WORKER_ID
+const ROUTES_PREFIX = app.config.ROUTES_PREFIX || 'routes'
 
 const SNIPPET_CONTENT_PREFIX = 'content_'
 const SNIPPET_CATCH_ERROR_PREFIX = 'catch_'
@@ -27,7 +27,7 @@ export default class ExecuteRoutesRoute extends app.Route {
   constructor () {
     super({
       type: app.RouteTypes.RPC,
-      uri: ROUTES_URI,
+      uri: ROUTES_PREFIX,
       options: {
         match: 'prefix'
       }
@@ -98,7 +98,7 @@ export default class ExecuteRoutesRoute extends app.Route {
   }
 
   routeId () {
-    return String(this.details.procedure).replace(ROUTES_URI + '.', '')
+    return String(this.details.procedure).replace(ROUTES_PREFIX + '.', '')
   }
 
   getClousureMethodName (prefix, id) {
