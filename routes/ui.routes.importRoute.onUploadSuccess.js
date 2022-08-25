@@ -112,6 +112,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.importRoute.step3'
         }
       ]

@@ -17,7 +17,7 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    console.log('-------ui.routes.navlistLeft.requestDataset', args, kwargs, details)
+
     let { limit, skip, query } = kwargs
 
     const navlistLeft = this.clientApplication.component('#navlistLeft')

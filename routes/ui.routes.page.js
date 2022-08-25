@@ -55,11 +55,13 @@ export default class UiComponent extends app.Route {
         {
           on: 'requestDataset',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.navlistLeft.requestDataset'
         },
         {
           on: 'select',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.navlistLeft.onSelect'
         },
       ]
@@ -149,6 +151,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.save'
         }
       ]
@@ -165,6 +168,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.new'
         }
       ]
@@ -181,6 +185,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.delete'
         }
       ]
@@ -197,6 +202,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.execute'
         }
       ]
@@ -213,6 +219,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.export'
         }
       ]
@@ -229,6 +236,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.toolbar.import'
         }
       ]

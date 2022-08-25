@@ -45,6 +45,7 @@ export default class UiComponent extends app.Route {
         {
           on: 'success',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.importRoute.onUploadSuccess'
         }
       ]
@@ -62,12 +63,11 @@ export default class UiComponent extends app.Route {
         {
           on: 'click',
           target: 'server',
+          endpointPrefix: false,
           endpoint: 'ui.routes.importRoute.step2'
         }
       ]
     })
-
-
   }
 }
 
