@@ -29,9 +29,9 @@ import system_users from '../db/models/system_users/index.js'
 const { isEmpty } = lodash
 const { Route, RouteTypes, ApplicationError } = app
 const { JWT_SALT } = process.env
-const USER_PASSWORD_FIELDNAME = process.env.MODEL_SYSTEM_USER__PASSOWRD
-const USER_IDENTIFIER_FIELDNAME = process.env.USER_IDENTIFIER_FIELDNAME
-const USER_EMAIL_FIELDNAME = process.env.USER_EMAIL_FIELDNAME
+const MODEL_SYSTEM_USER__PASSOWRD = process.env.MODEL_SYSTEM_USER__PASSOWRD
+const MODEL_SYSTEM_USER__IDENTIFIER = process.env.MODEL_SYSTEM_USER__IDENTIFIER
+const MODEL_SYSTEM_USER__EMAIL = process.env.MODEL_SYSTEM_USER__EMAIL
 
 
 // assets
@@ -159,7 +159,7 @@ export default class ServiceTicketAuthentication extends Route {
       if ( isEmpty(user)) return reject(new ApplicationError('AUTHTA001: User or ticket is empty'))
 
       // extract the password from user model
-      const userPassword = user[USER_PASSWORD_FIELDNAME]
+      const userPassword = user[MODEL_SYSTEM_USER__PASSOWRD]
 
       bcrypt
         .compare(ticket.password, userPassword)
@@ -185,7 +185,7 @@ export default class ServiceTicketAuthentication extends Route {
   createWebToken ({ authid, ticket, user } = {}) {
     if (isEmpty(user) || isEmpty(ticket)) throw new ApplicationError('AUTHTD001: arg deve conter os objetos user e credentials')
 
-    const token = jwt.sign({ user: user[USER_IDENTIFIER_FIELDNAME], email: useruser[USER_EMAIL_FIELDNAME] }, JWT_SALT)
+    const token = jwt.sign({ user: user[MODEL_SYSTEM_USER__IDENTIFIER], email: user[MODEL_SYSTEM_USER__EMAIL] }, JWT_SALT)
     ticket.token = token
     return { user, authid, ticket }
   }

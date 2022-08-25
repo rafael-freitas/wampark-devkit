@@ -77,6 +77,15 @@ export const lib = {
     getBufferFromStream
   },
 }
+
+/**
+ * 
+ * @param {*} file filepath from application base path
+ * @returns {String} full file path
+ */
+export function pathTo (file) {
+  return join(__dirname, '../', file)
+}
 /**
  * Init routes for application
  * @param {Array} routes Initial routes from config.routes.js

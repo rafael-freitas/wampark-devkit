@@ -1,5 +1,7 @@
 import app from 'wampark'
 
+const ROUTES_PREFIX = app.config.ROUTES_PREFIX
+
 export default class UiComponent extends app.Route {
   constructor () {
     super({
@@ -21,7 +23,10 @@ export default class UiComponent extends app.Route {
 
     const viewport = this.clientApplication.component('#viewport')
 
+    viewport.method('setWindowTitle', `Application Routes (${ROUTES_PREFIX})`)
+
     viewport.method('addHotkeys', 'ctrl+s, command+s', {
+      endpointPrefix: false,
       endpoint: 'ui.routes.toolbar.save'
     })
     
