@@ -84,9 +84,7 @@ export default class ExecuteRoutesRoute extends app.Route {
 
     // executar metodo e tratar erro do metodo
     try {
-      console.log('calling method')
       clousureReturnMethod = await contentMethod.call(sandbox, { kwargs })
-      console.log('Route return', clousureReturnMethod)
       this.log.info(`Route complete <${this.log.colors.silly(route._id)}>`)
     } catch (err) {
       if (err instanceof app.ApplicationError) {
@@ -96,7 +94,6 @@ export default class ExecuteRoutesRoute extends app.Route {
       this.log.error(`Route error <${this.log.colors.silly(route._id)}>:` + error.toJSON())
       throw error
     } finally {
-      console.log(`Route ok`)
     }
     // retornar valor
     return clousureReturnMethod
