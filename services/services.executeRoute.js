@@ -84,7 +84,7 @@ export default class ExecuteRoutesRoute extends app.Route {
    * @return {Promise}
    */
   route (...args) {
-    return this.call(...args)
+    return this.callRoute(...args)
   }
 
   async executeRoute (route, kwargs) {
