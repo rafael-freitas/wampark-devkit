@@ -1,7 +1,10 @@
 import app from 'wampark'
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
+function truncate_with_ellipsis(s,maxLength) {
+  if (s.length > maxLength) {
+     return s.substring(0, maxLength) + '...'
+  }
+  return s
 }
 
 export default class UiComponent extends app.Route {
@@ -27,6 +30,7 @@ export default class UiComponent extends app.Route {
     const selected = await navlistLeft.method('getSelected')
 
     viewport.method('setState', selected)
+    viewport.method('setWindowTitle', `${selected._id}`)
     
   }
 }

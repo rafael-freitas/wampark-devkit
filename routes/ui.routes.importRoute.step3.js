@@ -28,8 +28,6 @@ export default class UiComponent extends app.Route {
 
     btnNext.method('disable', true)
 
-    debugger
-
     // get dialog state
     const state = await dialog.method('getState')
 

@@ -61,6 +61,32 @@ export default class ExecuteRoutesRoute extends app.Route {
     }
   }
 
+  /**
+   * Chamada RPC para uma rota dinamica
+   * Este metodo adiciona o prefix da rota de execução no endpoint
+   * @param  {String} name rota: `route.store.appAcoes.list
+   * @param  {Mixed} payload
+   * @param  {Oject} options opções de chamada do RPC via crossbar
+   * @param  {Oject} routeProtocol especificar um RouteProtocol default: null
+   * @return {Promise}
+   */
+  callRoute (name, payload, options = {}, routeProtocol = null) {
+    return this.call(`${ROUTES_PREFIX}.${name}`, payload, options, routeProtocol)
+  }
+
+  /**
+   * Chamada RPC para uma rota dinamica
+   * Este metodo adiciona o prefix da rota de execução no endpoint
+   * @param  {String} name rota: `route.store.appAcoes.list
+   * @param  {Mixed} payload
+   * @param  {Oject} options opções de chamada do RPC via crossbar
+   * @param  {Oject} routeProtocol especificar um RouteProtocol default: null
+   * @return {Promise}
+   */
+  route (...args) {
+    return this.call(...args)
+  }
+
   async executeRoute (route, kwargs) {
     RoutesError.assert(route, 'B001: route instance required')
 
