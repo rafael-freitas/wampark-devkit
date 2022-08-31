@@ -22,9 +22,9 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    // console.log('ui.routes.navlistLeft.onSelect', args, kwargs, details)
+    console.log('ui.routes.navlistLeft.onSelect', args, kwargs, details)
 
-    const viewport = this.clientApplication.component('refViewport')
+    const viewport = this.clientApplication.component('#viewport')
 
     const navlistLeft = this.clientApplication.component('#navlistLeft')
     const selected = await navlistLeft.method('getSelected')

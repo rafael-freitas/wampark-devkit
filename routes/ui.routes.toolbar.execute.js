@@ -20,7 +20,7 @@ export default class UiComponent extends app.Route {
 
     console.log('details', details)
 
-    const viewport = this.clientApplication.component('refViewport')
+    const viewport = this.clientApplication.component('#viewport')
 
     try {
       confirmAction = await viewport.method('MessageBox', {
