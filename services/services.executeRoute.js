@@ -47,7 +47,7 @@ export default class ExecuteRoutesRoute extends app.Route {
     const route = await Routes.findOne({ _id: routeId }).lean()
 
     if (!route) {
-      throw new RoutesError(`A001: No Route found "${routeId} uri: ${this.routeController.details.procedure}"`)
+      throw new RoutesError(`services.executeRoute.A001: No Route found <${routeId}> uri: [${details.procedure}]`)
     }
 
     // criar o diretorio de snippets dinamicos de cada workflow chamado
@@ -55,9 +55,11 @@ export default class ExecuteRoutesRoute extends app.Route {
     shell.mkdir('-p', route.snippetDir)
 
     try {
-      return this.executeRoute(route, kwargs)
-    } catch (error) {
-      return Promise.reject(error.toJSON())
+      return await this.executeRoute(route, kwargs, details)
+    } catch (err) {
+      const error = RoutesError.parse(err)
+      // console.error(error)
+      return Promise.reject(error)
     }
   }
 
@@ -87,7 +89,7 @@ export default class ExecuteRoutesRoute extends app.Route {
     return this.callRoute(...args)
   }
 
-  async executeRoute (route, kwargs) {
+  async executeRoute (route, kwargs, details) {
     RoutesError.assert(route, 'B001: route instance required')
 
     let clousureReturnMethod
@@ -95,7 +97,8 @@ export default class ExecuteRoutesRoute extends app.Route {
     // valor de retorno do workflow
     let processFlowResult
 
-    this.log.info(`Running Route <${this.log.colors.silly(route._id)}>`)
+    // console.log('this.details', this.details)
+    this.log.info(`Running by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}] <${this.log.colors.silly(route._id)}>`)
 
     // criar um sandbox - extendendo esta classe RouteWorkflowsExecute - 
     // para isolar cada execução do workflow com uma instancia do sandbox
@@ -103,7 +106,40 @@ export default class ExecuteRoutesRoute extends app.Route {
     let sandbox = RouteSandbox.extend(this)
     // sandbox.__setupSandbox(route, kwargs)
     // copiar os dados do caller para o sandbox
-    sandbox.details = this.details
+    sandbox.details = details
+
+    Object.assign(sandbox, {
+      
+      clientApplication: {
+
+        component (querySelector) {
+          const protocol = {
+            querySelector
+          }
+          return {
+            method (name, ...args) {   
+              return sandbox.session.call(`agent.${details.caller}`, [protocol], {
+                plugin: 'execComponentMethod',
+                payload: {
+                  method: name,
+                  args
+                }
+              })
+            }
+          }
+        },
+      },
+
+      route (_endpoint, _kwargs, _options) {
+        const protocol = {
+          fromUser: details.caller_authid,
+          fromSession: details.caller,
+          targetUser: details.caller_authid,
+          targetSession: details.caller,
+        }
+        return sandbox.session.call(`${ROUTES_PREFIX}.${_endpoint}`, [protocol], _kwargs, _options)
+      }
+    })
 
     // converter codigo em metodo da classe Sandbox - gravar em arquivo no diretorio .snippets/
     const { default: contentMethod } = await this.wrapFunction(route, route.content, 'content')
@@ -111,13 +147,13 @@ export default class ExecuteRoutesRoute extends app.Route {
     // executar metodo e tratar erro do metodo
     try {
       clousureReturnMethod = await contentMethod.call(sandbox, { kwargs })
-      this.log.info(`Route complete <${this.log.colors.silly(route._id)}>`)
+      // this.log.info(`Route complete <${this.log.colors.silly(route._id)}>`)
     } catch (err) {
       if (err instanceof app.ApplicationError) {
         throw err
       }
       const error = new RoutesError(`B002: <${route._id}> snippet error: ${err.message || err.toString()}`, err)
-      this.log.error(`Route error <${this.log.colors.silly(route._id)}>:` + error.toJSON())
+      // this.log.error(`Route error <${this.log.colors.silly(route._id)}>:` + error.toJSON())
       throw error
     } finally {
     }

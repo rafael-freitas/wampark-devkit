@@ -105,7 +105,7 @@ export default class UiComponent extends app.Route {
     // await dialog.method('removeComponentFromSlot', 'btnNext')
     
     btnNext.method('removeEvents', 'click')
-    btnNext.updateProps({
+    btnNext.method('updateProps', {
       label: 'Finish',
       disabled: false,
       events: [
