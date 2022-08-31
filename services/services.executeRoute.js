@@ -152,9 +152,10 @@ export default class ExecuteRoutesRoute extends app.Route {
       if (err instanceof app.ApplicationError) {
         throw err
       }
-      const error = new RoutesError(`B002: <${route._id}> snippet error: ${err.message || err.toString()}`, err)
+      const error = RoutesError.parse(err)
+
+      throw new RoutesError(`services.executeRoute.B002: <${route._id}> snippet error: ${error.toString()}`, err)
       // this.log.error(`Route error <${this.log.colors.silly(route._id)}>:` + error.toJSON())
-      throw error
     } finally {
     }
     // retornar valor
