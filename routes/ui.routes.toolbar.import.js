@@ -38,6 +38,7 @@ export default class UiComponent extends app.Route {
       modelState: 'dialog',
       component: 'i-upload',
       action: uploadActionUrl,
+      autoUpload: true,
       id: 'inputUpload',
       name: 'file',
       label: 'Upload',
