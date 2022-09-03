@@ -7,6 +7,7 @@ import webserver from './lib/webserver/koa.js'
 import importRoute from './lib/importRoute.js'
 import createMongoFieldSearchQuery from './lib/db/createMongoFieldSearchQuery.js'
 import validators from './lib/validators/index.js'
+import formatters from './lib/formatters.js'
 import generateQuery from './lib/db/queryGenerator.js'
 import parseISODateToDateObject from './lib/db/parseISODateToDateObject.js'
 import { createReadStreamFromBuffer, getBufferFromStream } from './lib/streaming.js'
@@ -77,7 +78,8 @@ export const lib = {
     createReadStreamFromBuffer,
     getBufferFromStream
   },
-  validators
+  validators,
+  formatters
 }
 
 /**
