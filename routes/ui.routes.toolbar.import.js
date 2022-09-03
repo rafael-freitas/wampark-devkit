@@ -18,57 +18,54 @@ export default class UiComponent extends app.Route {
   async endpoint (args = [], kwargs = {}, details = {}) {
     const viewport = this.clientApplication.component('#viewport')
     const navlistLeft = this.clientApplication.component('#navlistLeft')
-    const selected = await navlistLeft.method('getSelected')
 
     const uploadActionUrl = `//${process.env.HTTP_HOST}:${process.env.HTTP_PORT}/api/routes/upload`
-
 
     await viewport.method('addDialog', {
       id: 'dialogUploadRoute',
       //width: 'auto',
       title: 'Import a Route',
       subtitle: 'Importing a Route from your computer',
-      content: `Note: A existing registred route will be overwrited!`
+
+      slots: {
+        main: [
+          {
+            component: 'c-grid',
+            cols: {
+              1: {span: 24},
+              2: {span: 24},
+            },
+            slots: {
+              1: [
+                {
+                  component: 'c-text',
+                  content: 'Note: An existing registred route will be OVERWRITED!'
+                }
+              ],
+              2: [
+                {
+                  modelState: 'dialog',
+                  component: 'i-upload',
+                  action: uploadActionUrl,
+                  autoUpload: true,
+                  id: 'inputUpload',
+                  name: 'file',
+                  label: 'Upload',
+                  events: [
+                    {
+                      on: 'success',
+                      endpointPrefix: false,
+                      endpoint: 'ui.routes.importRoute.onUploadSuccess'
+                    }
+                  ]
+                }
+              ],
+            }
+          }
+        ]
+      }
     })
 
-    const dialog = this.clientApplication.component('#dialogUploadRoute')
-
-    dialog.method('addComponent', {
-      slot: 'main',
-      modelState: 'dialog',
-      component: 'i-upload',
-      action: uploadActionUrl,
-      autoUpload: true,
-      id: 'inputUpload',
-      name: 'file',
-      label: 'Upload',
-      events: [
-        {
-          on: 'success',
-          target: 'server',
-          endpointPrefix: false,
-          endpoint: 'ui.routes.importRoute.onUploadSuccess'
-        }
-      ]
-    })
-
-    // dialog buttons ----------------------
-
-    await dialog.method('addComponent', {
-      slot: 'footer',
-      component: 'i-button',
-      id: 'btnNext',
-      label: 'Next',
-      type: 'primary',
-      events: [
-        {
-          on: 'click',
-          target: 'server',
-          endpointPrefix: false,
-          endpoint: 'ui.routes.importRoute.step2'
-        }
-      ]
-    })
   }
 }
 
