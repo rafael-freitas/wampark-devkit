@@ -28,13 +28,14 @@ export default class UiComponent extends app.Route {
     const btnNext = this.clientApplication.component('#btnNext')
 
     let rawdata
-    let route
+    let fileData
+    let isPack = false
 
     try {
       rawdata = fs.readFileSync(filepath)
-      route = JSON.parse(rawdata)
+      fileData = JSON.parse(rawdata)
       
-      if (!rawdata || !route) {
+      if (!rawdata || !fileData) {
         viewport.method('Notification', {
           type: 'error',
           title: 'Invalid file',
@@ -43,15 +44,29 @@ export default class UiComponent extends app.Route {
         dialog.method('close')
         return
       }
-      
-      if (!route._id || !route.hash) {
-        viewport.method('Notification', {
-          type: 'error',
-          title: 'Invalid file',
-          message: `E002: The file ${filepath} is not a JSON route file`
-        })
-        dialog.method('close')
-        return
+
+      // pack
+      if (fileData.data) {
+        isPack = true
+        if (fileData.data.length < 1) {
+          viewport.method('Notification', {
+            type: 'error',
+            title: 'Invalid pack',
+            message: `E002: The file ${filepath} there is no a route list`
+          })
+          dialog.method('close')
+          return
+        }
+      } else {
+        if (!fileData._id || !fileData.hash) {
+          viewport.method('Notification', {
+            type: 'error',
+            title: 'Invalid file',
+            message: `E003: The file ${filepath} is not a JSON route file`
+          })
+          dialog.method('close')
+          return
+        }
       }
     } catch (err) {
       console.error('Error to import JSON route file', err)
@@ -68,81 +83,78 @@ export default class UiComponent extends app.Route {
     // remover todos os componentes do dialog
     dialog.method('clearSlot', 'main')
 
-
     dialog.method('addComponent', {
-      slot: 'main',
-      modelState: 'dialog',
-      component: 'i-input',
-      id: 'dialog_txtEndpoint',
-      name: 'endpoint',
-      label: 'Endpoint',
-      type: 'text',
-      modelState: 'dialog',
-      rules: [
-        {
-          required: true,
-          message: "endpoint is riquered",
-          trigger: ['blur', 'change'],
-        }
-      ]
-    })
-
-    dialog.method('addComponent', {
-      slot: 'main',
-      modelState: 'dialog',
-      component: 'i-input',
-      id: 'dialog_txtHash',
-      name: 'hash',
-      label: 'Hash',
-      type: 'text',
-      disabled: true,
-      modelState: 'dialog',
-    })
-
-    // dialog buttons ----------------------
-
-    // adicionar botao de proximo
-    // await dialog.method('removeComponentFromSlot', 'btnNext')
-    
-    btnNext.method('removeEvents', 'click')
-    btnNext.method('updateProps', {
+      slot: 'footer',
+      component: 'i-button',
+      type: 'primary',
       label: 'Finish',
-      disabled: false,
       events: [
         {
           on: 'click',
-          target: 'server',
           endpointPrefix: false,
           endpoint: 'ui.routes.importRoute.step3'
         }
       ]
     })
-    
-    // await dialog.method('addComponent', {
-    //   slot: 'footer',
-    //   component: 'i-button',
-    //   id: 'btnNext',
-    //   label: 'Finish',
-    //   type: 'primary',
-    //   events: [
-    //     {
-    //       on: 'click',
-    //       target: 'server',
-    //       endpoint: 'ui.routes.importRoute.step3'
-    //     }
-    //   ]
-    // })
 
-    // STATE ----- atualizar state do dialog
-    dialog.method('setState', {
-      endpoint: route._id,
-      hash: route.hash,
-      filepath: filepath,
-    })
+    if (isPack) {
+      dialog.method('addComponent', {
+        slot: 'main',
+        modelState: 'dialog',
+        component: 'c-text',
+        content: 'Pack list: ' + JSON.stringify(fileData.data.map(x => x._id))
+      })
 
-    const dialog_txtEndpoint = await this.clientApplication.component('#dialog_txtEndpoint')
-    dialog_txtEndpoint.method('focus')
+      // STATE ----- atualizar state do dialog
+      dialog.method('setState', {
+        isPack,
+        filepath: filepath,
+      })
 
+    } else {
+      dialog.method('updateSlots', {
+        main: [
+          {
+            modelState: 'dialog',
+            component: 'i-input',
+            id: 'dialog_txtEndpoint',
+            name: 'endpoint',
+            label: 'Endpoint',
+            type: 'text',
+            modelState: 'dialog',
+            rules: [
+              {
+                required: true,
+                message: "endpoint is riquered",
+                trigger: ['blur', 'change'],
+              }
+            ]
+          },
+
+          {
+            slot: 'main',
+            modelState: 'dialog',
+            component: 'i-input',
+            id: 'dialog_txtHash',
+            name: 'hash',
+            label: 'Hash',
+            type: 'text',
+            disabled: true,
+            modelState: 'dialog',
+          }
+        ],
+      })
+
+      const dialog_txtEndpoint = await this.clientApplication.component('#dialog_txtEndpoint')
+      dialog_txtEndpoint.method('focus')
+
+        // STATE ----- atualizar state do dialog
+      dialog.method('setState', {
+        endpoint: fileData._id,
+        hash: fileData.hash,
+        filepath: filepath,
+      })
+    }
   }
 }
 

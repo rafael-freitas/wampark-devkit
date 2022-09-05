@@ -129,6 +129,8 @@ export function startEngine (routes, options = {}) {
       join(__dirname, 'routes/ui.routes.importRoute.step3.js'),
       join(__dirname, 'routes/ui.routes.navlistLeft.requestDataset.js'),
       join(__dirname, 'routes/ui.routes.navlistLeft.onSelect.js'),
+      join(__dirname, 'routes/ui.routes.export.dialog.transfer.requestOptions.js'),
+      join(__dirname, 'routes/ui.routes.export.dialog.exportPack.js'),
 
       // HTTP upload routes
       join(__dirname, 'http/routes/download/index.js'),

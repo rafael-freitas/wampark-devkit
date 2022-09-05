@@ -12,6 +12,21 @@ export default class UiComponent extends app.Route {
     })
   }
 
+  async updateRoute (endpoint, data) {
+    let doc = await Routes.findOne({_id: endpoint})
+    if (doc && doc._id) {
+      return  Routes.findAndSave({_id: endpoint}, Object.assign({}, doc, data, {
+        [MODEL_ROUTES_ENDPOINT]: endpoint,
+      }))
+    } else {
+      doc = new Routes( Object.assign({}, doc, data, {
+        [MODEL_ROUTES_ENDPOINT]: endpoint,
+      }))
+      // salvar no banco
+      return doc.save()
+    }
+  }
+
   /**
    * @ignore
    * @param args
@@ -43,32 +58,38 @@ export default class UiComponent extends app.Route {
     try {
       try {
         let rawdata = fs.readFileSync(state.filepath)
-        let route = JSON.parse(rawdata)
-        let doc = await Routes.findOne({_id: state.endpoint})
-        if (doc && doc._id) {
-          doc = await Routes.findAndSave({_id: state.endpoint}, Object.assign({}, doc, route, {
-            [MODEL_ROUTES_ENDPOINT]: state.endpoint,
+        let fileData = JSON.parse(rawdata)
+
+        if (state.isPack) {
+          const done = await Promise.all(fileData.data.map(async x => {
+            return this.updateRoute(x.endpoint, x)
           }))
           viewport.method('Notification', {
             type: 'success',
-            title: 'Updated!',
-            message: `${state.endpoint} updated!`
+            title: 'Pack imported!',
+            message: `Pack ${state.filepath} processed and imported!`
           })
         } else {
-          doc = new Routes( Object.assign({}, doc, route, {
-            [MODEL_ROUTES_ENDPOINT]: state.endpoint,
-          }))
-          // salvar no banco
-          await doc.save()
-          viewport.method('Notification', {
-            type: 'success',
-            title: 'Saved!',
-            message: `${state.endpoint} created!`
-          })
+          
+          let doc = await Routes.findOne({_id: state.endpoint})
+          if (doc && doc._id) {
+            doc = await this.updateRoute(state.endpoint, fileData)
+            viewport.method('Notification', {
+              type: 'success',
+              title: 'Updated!',
+              message: `${state.endpoint} updated!`
+            })
+          } else {
+            doc = await this.updateRoute(state.endpoint, fileData)
+            viewport.method('Notification', {
+              type: 'success',
+              title: 'Saved!',
+              message: `${state.endpoint} created!`
+            })
+          }
+          // selecionar o registro atual
+          navlistLeft.method('setSelected', doc)
         }
-        
-        // selecionar o registro atual
-        navlistLeft.method('setSelected', doc)
       } catch (error) {
         console.error('Error', error)
         viewport.method('Notification', {

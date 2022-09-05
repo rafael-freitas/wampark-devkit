@@ -1,5 +1,7 @@
 import app from 'wampark'
-import Routes from '../db/models/routes/index.js'
+// import Routes from '../db/models/routes/index.js'
+
+const uploadActionUrl = `//${process.env.HTTP_HOST}:${process.env.HTTP_PORT}/api/routes/upload`
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -16,16 +18,19 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    const viewport = this.clientApplication.component('#viewport')
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
+    const { command } = kwargs
 
-    const uploadActionUrl = `//${process.env.HTTP_HOST}:${process.env.HTTP_PORT}/api/routes/upload`
+    this.addDialogImport()
+  }
+
+  async addDialogImport () {
+    const viewport = this.clientApplication.component('#viewport')
 
     await viewport.method('addDialog', {
       id: 'dialogUploadRoute',
       //width: 'auto',
-      title: 'Import a Route',
-      subtitle: 'Importing a Route from your computer',
+      title: 'Import routes',
+      subtitle: 'Importing a route or pack of routes from your computer',
 
       slots: {
         main: [
@@ -39,7 +44,7 @@ export default class UiComponent extends app.Route {
               1: [
                 {
                   component: 'c-text',
-                  content: 'Note: An existing registred route will be OVERWRITED!'
+                  content: 'Note: Whether the route exists it will be OVERWRITED!'
                 }
               ],
               2: [
@@ -65,7 +70,6 @@ export default class UiComponent extends app.Route {
         ]
       }
     })
-
   }
 }
 
