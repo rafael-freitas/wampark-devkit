@@ -17,6 +17,7 @@ export default function (ModelSchema) {
 
   ModelSchema.pre('validate', function (next) {
     this._id = this.path
+    this.___uuid = this._uuid
     // gerar um uuid unico na primeira vez q salvar pra identificar o registro
     if (!this._uuid) {
       this._uuid = uuid(this._id + Date.now())
@@ -51,7 +52,7 @@ export default function (ModelSchema) {
     // se alterar o name criar uma nova chave
     if (!this.isNew && this.isModified(MODEL_ROUTES_ENDPOINT)) {
       // remover registro antigo
-      await this.constructor.deleteOne({ _uuid: this._uuid })
+      await this.constructor.remove({ _uuid: this.___uuid })
 
       // let doc = new this.constructor({
       //   ...this._doc
