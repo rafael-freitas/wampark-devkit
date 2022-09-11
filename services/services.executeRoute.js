@@ -41,7 +41,7 @@ export default class ExecuteRoutesRoute extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    this.details = details
+    // this.details = details
     const routeId = this.routeId()
 
     const route = await Routes.findOne({ _id: routeId }).lean()
@@ -105,11 +105,11 @@ export default class ExecuteRoutesRoute extends app.Route {
     // permitindo a passagem de valores através do this para os steps do workflow
     let sandbox = RouteSandbox.extend(this)
     // sandbox.__setupSandbox(route, kwargs)
-    // copiar os dados do caller para o sandbox
-    sandbox.details = details
+    // sandbox.details = details
 
     Object.assign(sandbox, {
-      
+      // copiar os dados do caller para o sandbox
+      details,
       clientApplication: {
 
         component (querySelector) {
@@ -118,7 +118,7 @@ export default class ExecuteRoutesRoute extends app.Route {
           }
           return {
             method (name, ...args) {   
-              return sandbox.session.call(`agent.${details.caller}`, [protocol], {
+              return sandbox.session.call(`agent.${sandbox.details.caller}`, [protocol], {
                 plugin: 'execComponentMethod',
                 payload: {
                   method: name,
