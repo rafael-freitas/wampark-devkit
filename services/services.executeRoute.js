@@ -41,7 +41,7 @@ export default class ExecuteRoutesRoute extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    // this.details = details
+    this.details = details
     const routeId = this.routeId()
 
     const route = await Routes.findOne({ _id: routeId }).lean()
