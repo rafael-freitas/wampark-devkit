@@ -1,5 +1,8 @@
 import app from 'wampark'
 import Routes from '../db/models/routes/index.js'
+import RouteSandbox from '../lib/RouteSandbox.js'
+
+const ROUTES_PREFIX = app.config.ROUTES_PREFIX || 'routes'
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -18,7 +21,7 @@ export default class UiComponent extends app.Route {
   async endpoint (args = [], kwargs = {}, details = {}) {
     let confirmAction = false
 
-    console.log('details', details)
+    // console.log('ui.routes.toolbar.execute details', details)
 
     const viewport = this.clientApplication.component('#viewport')
 
@@ -41,26 +44,42 @@ export default class UiComponent extends app.Route {
     if (!confirmAction) {
       return false
     }
+
+    viewport.method('Message', {
+      type: 'info',
+      message: 'Running route...',
+    })
     
     // obter dados do formulario
-    const model = await viewport.method('getState')
+    const state = await viewport.method('getState')
 
     try {
-      const systemFile = await Routes.findById(model._id)
-      const result = await this.call('file.' + systemFile._id, {}, this.routeProtocol)
+      const route = await Routes.findById(state._id)
+      
+      // criar sendbox
+      const sandbox = RouteSandbox.extend(this)
+      sandbox.beforeSetup(args, kwargs, details)
+      sandbox.setup(args, kwargs, details)
+
+      this.log.info(`Excuted by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}] <${this.log.colors.silly(route._id)}>`)
+      const result = await sandbox.route(route._id, {})
 
       viewport.method('MessageBox', {
         title: 'Result',
-        message: result,
+        message: JSON.stringify(result) || '(no return)',
         // showCancelButton: true,
         confirmButtonText: 'OK',
         // cancelButtonText: 'Cancel',
       })
       
-      this.clientApplication.notify.success('System file exected!', 'Alright')
     } catch (err) {
-
-      this.clientApplication.notify.error('Error during executing system file. Check terminal log', 'Opss!')
+      const error = app.ApplicationError.parse(err)
+      viewport.method('Notification', {
+        type: 'error',
+        title: 'Ops!!',
+        message: `Error during running route ${state._id}. Check terminal log`,
+      })
+      console.error(error)
     }
   }
 }

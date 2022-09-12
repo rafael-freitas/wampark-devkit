@@ -32,6 +32,20 @@ export default class ExecuteRoutesRoute extends app.Route {
         match: 'prefix'
       }
     })
+    // guardar as rotas importadas e os metodos indexados por hash
+    this.routes = {}
+  }
+
+  setup (args = [], kwargs = {}, details = {}) {
+    const [protocol = {}] = args
+    // setar sempre o chamador inicial como protocolo
+    if (protocol.targetUser) {
+      this.details = {
+        caller_authid: protocol.targetUser,
+        caller: protocol.targetSession,
+        procedure: details.procedure,
+      }
+    }
   }
 
   /**
@@ -41,7 +55,6 @@ export default class ExecuteRoutesRoute extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    this.details = details
     const routeId = this.routeId()
 
     const route = await Routes.findOne({ _id: routeId }).lean()
@@ -50,116 +63,53 @@ export default class ExecuteRoutesRoute extends app.Route {
       throw new RoutesError(`services.executeRoute.A001: No Route found <${routeId}> uri: [${details.procedure}]`)
     }
 
-    // criar o diretorio de snippets dinamicos de cada workflow chamado
-    route.snippetDir = path.join(SNIPPET_DIR, routeId)
-    shell.mkdir('-p', route.snippetDir)
-
-    try {
-      return await this.executeRoute(route, kwargs, details)
-    } catch (err) {
-      const error = RoutesError.parse(err)
-      // console.error(error)
-      return Promise.reject(error)
-    }
+    return this.callRouteInstanceMethod(route, args, kwargs, details)
   }
 
-  /**
-   * Chamada RPC para uma rota dinamica
-   * Este metodo adiciona o prefix da rota de execução no endpoint
-   * @param  {String} name rota: `route.store.appAcoes.list
-   * @param  {Mixed} payload
-   * @param  {Oject} options opções de chamada do RPC via crossbar
-   * @param  {Oject} routeProtocol especificar um RouteProtocol default: null
-   * @return {Promise}
-   */
-  callRoute (name, payload, options = {}, routeProtocol = null) {
-    return this.call(`${ROUTES_PREFIX}.${name}`, payload, options, routeProtocol)
-  }
+  async callRouteInstanceMethod (..._args) {
+    const [route, args = [], kwargs = {}, details = {}] = _args
 
-  /**
-   * Chamada RPC para uma rota dinamica
-   * Este metodo adiciona o prefix da rota de execução no endpoint
-   * @param  {String} name rota: `route.store.appAcoes.list
-   * @param  {Mixed} payload
-   * @param  {Oject} options opções de chamada do RPC via crossbar
-   * @param  {Oject} routeProtocol especificar um RouteProtocol default: null
-   * @return {Promise}
-   */
-  route (...args) {
-    return this.callRoute(...args)
-  }
+    let cache = this.routes[route._id]
+    if (cache) {
+      // se o hash mudou importar o snippet novamente
+      if (cache.hash !== route.hash) {
+        this.log.info(`Removing route cache [${route.hash}] <${this.log.colors.silly(route._id)}>`)
+        delete this.routes[route._id]
+        return this.callRouteInstanceMethod(..._args)
+      }
+      try {
+        this.log.info(`Running [${route.hash}] <${this.log.colors.silly(route._id)}> by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}]`)
 
-  async executeRoute (route, kwargs, details) {
-    RoutesError.assert(route, 'B001: route instance required')
+        // create sandbox
+        const sandbox = RouteSandbox.extend(this)
+        sandbox.beforeSetup(args, kwargs, details)
+        sandbox.setup(args, kwargs, details)
 
-    let clousureReturnMethod
-    let clousureReturnErrorMethod
-    // valor de retorno do workflow
-    let processFlowResult
-
-    // console.log('this.details', this.details)
-    this.log.info(`Running by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}] <${this.log.colors.silly(route._id)}>`)
-
-    // criar um sandbox - extendendo esta classe RouteWorkflowsExecute - 
-    // para isolar cada execução do workflow com uma instancia do sandbox
-    // permitindo a passagem de valores através do this para os steps do workflow
-    let sandbox = RouteSandbox.extend(this)
-    // sandbox.__setupSandbox(route, kwargs)
-    // sandbox.details = details
-
-    Object.assign(sandbox, {
-      // copiar os dados do caller para o sandbox
-      details,
-      clientApplication: {
-
-        component (querySelector) {
-          const protocol = {
-            querySelector
-          }
-          return {
-            method (name, ...args) {   
-              return sandbox.session.call(`agent.${sandbox.details.caller}`, [protocol], {
-                plugin: 'execComponentMethod',
-                payload: {
-                  method: name,
-                  args
-                }
-              })
-            }
-          }
-        },
-      },
-
-      route (_endpoint, _kwargs, _options) {
-        const protocol = {
-          fromUser: details.caller_authid,
-          fromSession: details.caller,
-          targetUser: details.caller_authid,
-          targetSession: details.caller,
+        return await cache.contentMethod.call(sandbox, {args, kwargs, details})
+      } catch (err) {
+        if (err instanceof app.ApplicationError) {
+          throw err
         }
-        return sandbox.session.call(`${ROUTES_PREFIX}.${_endpoint}`, [protocol], _kwargs, _options)
+        const error = RoutesError.parse(err)
+  
+        throw new RoutesError(`services.callRouteInstanceMethod.E001: <${route._id}> snippet error: ${error.toString()}`, err)
       }
-    })
+    } else {
+      this.log.info(`Creating route sandbox [${route.hash}] <${this.log.colors.silly(route._id)}>`)
+      // criar o diretorio de snippets dinamicos de cada workflow chamado
+      route.snippetDir = path.join(SNIPPET_DIR, route._id)
+      shell.mkdir('-p', route.snippetDir)
 
-    // converter codigo em metodo da classe Sandbox - gravar em arquivo no diretorio .snippets/
-    const { default: contentMethod } = await this.wrapFunction(route, route.content, 'content')
+      // converter codigo em metodo da classe Sandbox - gravar em arquivo no diretorio .snippets/
+      const { default: contentMethod } = await this.wrapFunction(route, route.content, 'content')
 
-    // executar metodo e tratar erro do metodo
-    try {
-      clousureReturnMethod = await contentMethod.call(sandbox, { kwargs })
-      // this.log.info(`Route complete <${this.log.colors.silly(route._id)}>`)
-    } catch (err) {
-      if (err instanceof app.ApplicationError) {
-        throw err
+      this.routes[route._id] = {
+        contentMethod,
+        hash: route.hash
       }
-      const error = RoutesError.parse(err)
 
-      throw new RoutesError(`services.executeRoute.B002: <${route._id}> snippet error: ${error.toString()}`, err)
-      // this.log.error(`Route error <${this.log.colors.silly(route._id)}>:` + error.toJSON())
-    } finally {
+      return this.callRouteInstanceMethod(..._args)
     }
-    // retornar valor
-    return clousureReturnMethod
   }
 
   routeId () {
@@ -234,14 +184,6 @@ export default class ExecuteRoutesRoute extends app.Route {
     // gravar snippet em arquivo no Sistema Operacional
     fs.writeFileSync(snippetPath, snippet)
     return await import(snippetPath)
-  }
-
-  /**
-   * Retorna log para o front end
-   */
-   async print (...args) {
-    console.log(...args)
-    await this.app.currentComponent.addLog(args)
   }
 }
 
