@@ -73,7 +73,7 @@ export default class ExecuteRoutesRoute extends app.Route {
     if (cache) {
       // se o hash mudou importar o snippet novamente
       if (cache.hash !== route.hash) {
-        this.log.info(`Removing route cache [${route.hash}] <${this.log.colors.silly(route._id)}>`)
+        this.log.info(`Removing route cache [${cache.hash}] <${this.log.colors.silly(route._id)}>`)
         delete this.routes[route._id]
         return this.callRouteInstanceMethod(..._args)
       }
