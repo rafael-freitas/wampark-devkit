@@ -180,12 +180,28 @@ export default class UiComponent extends app.Route {
 
         ],
 
+        widgets: [
+          {
+            component: 'c-small-widget',
+            description: 'Endpoint',
+            // formatter: 'datetime',
+            statePath: 'endpoint',
+          },
+          {
+            component: 'c-small-widget',
+            description: 'Update at',
+            formatter: 'datetime',
+            statePath: 'updatedAt',
+          },
+        ],
+
         left: [
           {
             component: 'nav-list',
             id: 'navlistLeft',
             name: 'navlistLeft',
             labelKey: 'endpoint',
+            limit: 50,
             events: [
               {
                 on: 'requestDataset',

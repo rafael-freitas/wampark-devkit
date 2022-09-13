@@ -3,6 +3,7 @@ import Routes from '../db/models/routes/index.js'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 const MODEL_ROUTES_CONTENT = process.env.MODEL_ROUTES_CONTENT
+const MODEL_ROUTES_UPDATEAT = process.env.MODEL_ROUTES_UPDATEAT
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -59,6 +60,7 @@ export default class UiComponent extends app.Route {
             doc = await Routes.findAndSave({_id: state._id}, {
               [MODEL_ROUTES_ENDPOINT]: state.endpoint,
               [MODEL_ROUTES_CONTENT]: state.content,
+              [MODEL_ROUTES_UPDATEAT]: Date.now(),
               header: state.header,
             })
             // this.clientApplication.notify.success('Object updated!', 'Alright!!')
@@ -71,6 +73,7 @@ export default class UiComponent extends app.Route {
             doc = new Routes({
               [MODEL_ROUTES_ENDPOINT]: state.endpoint,
               [MODEL_ROUTES_CONTENT]: state.content,
+              [MODEL_ROUTES_UPDATEAT]: Date.now(),
               header: state.header,
             })
             // salvar no banco

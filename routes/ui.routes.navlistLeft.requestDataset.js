@@ -31,7 +31,7 @@ export default class UiComponent extends app.Route {
     }
 
     const resultset = await Routes.findByAggregate(queryObject, {}, {
-      limit, skip
+      limit, skip, sort: {_id: 1}
     })
 
     // console.log('resultset', resultset)
