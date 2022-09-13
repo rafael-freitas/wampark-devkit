@@ -48,10 +48,6 @@ export default class UiComponent extends app.Route {
     // obter dados do formulario
     const state = await viewport.method('getState')
     try {
-      viewport.method('Message', {
-        type: 'info',
-        message: 'Validating form...'
-      })
       const isValid = await viewport.method('isFormValid')
       if (isValid) {
         try {
@@ -64,10 +60,10 @@ export default class UiComponent extends app.Route {
               header: state.header,
             })
             // this.clientApplication.notify.success('Object updated!', 'Alright!!')
-            viewport.method('Notification', {
+            viewport.method('Message', {
               type: 'success',
-              title: 'Updated!',
-              message: 'Object updated OK!'
+              // title: 'Updated!',
+              message: `${state._id} updated OK!`
             })
           } else {
             doc = new Routes({
@@ -78,10 +74,10 @@ export default class UiComponent extends app.Route {
             })
             // salvar no banco
             await doc.save()
-            viewport.method('Notification', {
+            viewport.method('Message', {
               type: 'success',
-              title: 'Saved!',
-              message: 'Object was saved successful!'
+              // title: 'Updated!',
+              message: `${doc._id} created OK!`
             })
             // this.clientApplication.notify.success('Object saved!', 'Alright!!')
           }
