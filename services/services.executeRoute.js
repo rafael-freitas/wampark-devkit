@@ -82,6 +82,8 @@ export default class ExecuteRoutesRoute extends app.Route {
 
         // create sandbox
         const sandbox = RouteSandbox.extend(this)
+        sandbox.uri = `sandbox:${route._id}`
+        sandbox.log = sandbox.getLogger()
         sandbox.beforeSetup(args, kwargs, details)
         sandbox.setup(args, kwargs, details)
 
@@ -90,9 +92,9 @@ export default class ExecuteRoutesRoute extends app.Route {
         if (err instanceof app.ApplicationError) {
           throw err
         }
-        const error = RoutesError.parse(err)
+        throw RoutesError.parse(err)
   
-        throw new RoutesError(`services.callRouteInstanceMethod.E001: <${route._id}> snippet error: ${error.toString()}`, err)
+        // throw new RoutesError(`services.callRouteInstanceMethod.E001: <${route._id}> ${error.message}`, err)
       }
     } else {
       this.log.info(`Creating route sandbox [${route.hash}] <${this.log.colors.silly(route._id)}>`)
