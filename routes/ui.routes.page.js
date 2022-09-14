@@ -201,6 +201,7 @@ export default class UiComponent extends app.Route {
             id: 'navlistLeft',
             name: 'navlistLeft',
             labelKey: 'endpoint',
+            captionKey: 'endpoint',
             limit: 50,
             events: [
               {
