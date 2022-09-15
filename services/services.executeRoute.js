@@ -82,7 +82,7 @@ export default class ExecuteRoutesRoute extends app.Route {
 
         // create sandbox
         const sandbox = RouteSandbox.extend(this)
-        sandbox.uri = `sandbox:${route._id}`
+        sandbox.uri = `sandbox#${route._id}`
         sandbox.log = sandbox.getLogger()
         sandbox.beforeSetup(args, kwargs, details)
         sandbox.setup(args, kwargs, details)
