@@ -1,5 +1,7 @@
 import app from 'wampark'
 import Routes from '../db/models/routes/index.js'
+import fs from 'fs'
+import path from 'path'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 const MODEL_ROUTES_CONTENT = process.env.MODEL_ROUTES_CONTENT
@@ -34,20 +36,19 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    const { default: fs} = await import('fs')
 
-    const viewport = this.clientApplication.component('#viewport')
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
-    const dialog = this.clientApplication.component('#dialogUploadRoute')
-    const btnNext = this.clientApplication.component('#btnNext')
+    const viewport = this.component('#viewport')
+    const navlistLeft = this.component('#navlistLeft')
+    const dialog = this.component('#dialogUploadRoute')
+    const btnNext = this.component('#btnNext')
 
-    btnNext.method('disable', true)
+    btnNext.disable(true)
 
     // get dialog state
-    const state = await dialog.method('getState')
+    const state = await dialog.getState()
 
     if (!state.filepath) {
-      viewport.method('Notification', {
+      viewport.Notification({
         type: 'error',
         title: 'Opss!',
         message: 'filepath not found'
@@ -55,65 +56,83 @@ export default class UiComponent extends app.Route {
       return
     }
 
+    const filename = path.parse(state.filepath).name
+
     try {
       try {
         let rawdata = fs.readFileSync(state.filepath)
         let fileData = JSON.parse(rawdata)
 
         if (state.isPack) {
-          const done = await Promise.all(fileData.data.map(async x => {
+          const table = this.component('tbImportRoutes')
+          const selecteds = await table.getSelectionRows()
+
+          if (selecteds.length < 1) {
+            viewport.Notification({
+              type: 'warning',
+              title: 'Pack import',
+              message: `Select almost one route to import`
+            })
+            return
+          }
+
+          const filtred = fileData.data.filter(x => selecteds.findIndex(o => o._id == x._id) > -1)
+          const done = await Promise.all(filtred.map(async x => {
             return this.updateRoute(x.endpoint, x)
           }))
-          viewport.method('Notification', {
+
+          viewport.Notification({
             type: 'success',
-            title: 'Pack imported!',
-            message: `Pack ${state.filepath} processed and imported!`
+            title: 'Pack import',
+            message: `Pack imported ${filtred.length} of ${fileData.data.length} items from ${filename}`
           })
+          dialog.close()
+          
         } else {
           
           let doc = await Routes.findOne({_id: state.endpoint})
           if (doc && doc._id) {
             doc = await this.updateRoute(state.endpoint, fileData)
-            viewport.method('Notification', {
+            viewport.Notification({
               type: 'success',
-              title: 'Updated!',
+              title: 'Route import',
               message: `${state.endpoint} updated!`
             })
           } else {
             doc = await this.updateRoute(state.endpoint, fileData)
-            viewport.method('Notification', {
+            viewport.Notification({
               type: 'success',
-              title: 'Saved!',
+              title: 'Route import',
               message: `${state.endpoint} created!`
             })
+            
           }
           // selecionar o registro atual
           navlistLeft.method('setSelected', doc)
         }
-      } catch (error) {
-        console.error('Error', error)
-        viewport.method('Notification', {
+      } catch (err) {
+        const error = app.ApplicationError.parse(err)
+        console.error(this.uri, error)
+        viewport.Notification({
           type: 'error',
           title: 'Opss!',
-          message: error
+          message: error.message
         })
       }
 
       // atualizar nav-list
-      await navlistLeft.method('handleQuickSearch')
+      await navlistLeft.handleQuickSearch()
     } catch (err) {
       console.log('FORM ERROR', err, model)
 
-      viewport.method('Notification', {
+      viewport.Notification({
         type: 'warning',
-        title: 'Formulário',
-        message: 'Preencha os campos obrigatórios do formulário'
+        title: 'Import routes',
+        message: 'Fill the form'
       })
     } finally {
-      dialog.method('close')
+      
     }
-
-    dialog.method('close')
 
   }
 }

@@ -5,6 +5,8 @@ import md5 from 'md5'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 
+const DEFAULT_FUNCTION_NAME = '___endpoint___'
+
 export default function (modelSchema) {
   Object.assign(modelSchema.statics, {
     
@@ -13,7 +15,6 @@ export default function (modelSchema) {
     },
 
     generateFileContent (route) {
-      const filePrefix = '___content'
       // wrapper para method async na classe atual
       let params = ['kwargs']
       
@@ -22,7 +23,7 @@ export default function (modelSchema) {
 
       // wraper da funcao
       // assinatura: function content(kwargs, extraParams[])
-      return `${route.header}\nexport default async function ${filePrefix} ({${params.join(', ')}}) {\n${route.content}\n}`
+      return `${route.header}\nexport default async function ${DEFAULT_FUNCTION_NAME} ({${params.join(', ')}}) {\n${route.content}\n}`
     },
 
     generateHash (header, content) {
@@ -34,7 +35,7 @@ export default function (modelSchema) {
     },
 
     parseFileContent(str) {
-      const regex = /^(.*?)(\nexport default async function ___content \(\{kwargs\}\) {\n)(.*?)\n}$/gs
+      const regex = /^(.*?)?(\n?export default async function(.*?){\n)(.*?)\n}$/gs
       const parts = regex.exec(str)
 
       if (!parts) {
@@ -46,7 +47,7 @@ export default function (modelSchema) {
       }
 
       const header = parts[1]
-      const content = parts[3]
+      const content = parts[4]
 
       // let header = parts[1].replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1').replace(/\n(.*?)\n\n$/, '$1')
 

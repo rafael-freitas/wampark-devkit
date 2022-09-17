@@ -25,7 +25,7 @@ const SCHEMA_OPTIONS = {
 const modelSchema = new mongoose.Schema({
 
   /**
-   * Composto por todos os nodes pai + nome da chave
+   * 
    */
   _id: {
     type: String,
@@ -33,44 +33,46 @@ const modelSchema = new mongoose.Schema({
   },
 
   /**
-   * aponta para o documento inicial de controle de versao
-   * o primeiro documento publicado
-   * @type {ObjectId}
+   * UUID
    */
-   __id: {
-    type: String
-  },
-
   hash: {
     type: String,
     required: true
   },
 
   /**
-   * Nome da chave
+   * Endpoint name
    */
-  [FIELD_ENDPOINT]: {
+  endpoint: {
     type: String,
     required: true
   },
 
   /**
-   * Especificação do processo
-   * Códigos e statements
+   * file content
+   * export default function content
    */
-   [FIELD_CONTENT]: {
-    type: Mixed
+  content: {
+    type: String
   },
+  
   /**
-   * Header do arquivo
-   * Use para imports
+   * file header
    */
    header: {
     type: String
   },
 
   /**
-   * Documentação em MARKDOWN
+   * midlewares list
+   */
+  midlewares: {
+    type: Array,
+    default: () => []
+  },
+
+  /**
+   * MARKDOWN
    * @type {String}
    */
    documentation: {

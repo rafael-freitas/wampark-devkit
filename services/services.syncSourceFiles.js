@@ -21,6 +21,7 @@ const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'rou
 
 const ENABLE_ROUTES_SOURCE = Number(process.env.ENABLE_ROUTES_SOURCE)
 const ENABLE_ROUTES_SOURCE_SYNC = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC)
+const ENABLE_ROUTES_SOURCE_SYNC_DELETE = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_DELETE)
 
 if (process.env.ROUTES_SOURCE_DIR) {
   shell.mkdir('-p', SOURCE_DIR)
@@ -63,17 +64,30 @@ export default class SyncSourceFilesRoute extends app.Route {
 
   async add (fullpath) {
     const _id = path.parse(fullpath).name
-    let route = await Routes.findOne({_id}, {_id: 1})
+    // console.log(this.uri, _id)
+    let route = await Routes.findOne({_id}, {_id: 1, hash: 1})
     if (route) {
       // console.log(`[source] already exists: ${_id}`)
+      // throw Error(`exists ${_id}`)
       return
     }
 
     const file = Routes.parseFileContent(fs.readFileSync(fullpath))
-    const doc = new Routes(file)
     try {
-      await doc.save()
-      console.log(`[${this.uri}] [NEW] ${doc._id} -> ${doc.hash}`)
+      if (!route || file.hash !== route.hash) {
+        if (file.content !== null) {
+          Object.assign(file, {
+            endpoint: _id
+          })
+          const doc = new Routes(file)
+          await doc.save()
+          console.log(`[${this.uri}] [NEW] ${doc._id} -> ${doc.hash}`)
+        }
+        else {
+          console.log(`[${this.uri}] [ERROR] ${_id} -> No content found check export default function`)
+        }
+      }
+      
     } catch (err) {
       console.log(`[${this.uri}] [ERROR] ${err.message}`, err)
     }
@@ -82,28 +96,49 @@ export default class SyncSourceFilesRoute extends app.Route {
   async change (fullpath) {
     const _id = path.parse(fullpath).name
 
-    console.log(`[${this.uri}] change ${_id}`)
+    // console.log(`[${this.uri}] change ${_id}`)
 
-    let route = await Routes.findOne({_id})
+    try {
+      let route = await Routes.findOne({_id})
 
-    if (route) {
-      console.log(`[${this.uri}] parsing: ${_id}`)
-      const file = Routes.parseFileContent(fs.readFileSync(fullpath))
+      if (route) {
+        // console.log(`[${this.uri}] parsing: ${_id}`)
+        const file = Routes.parseFileContent(fs.readFileSync(fullpath))
 
-      if (file.content && file.hash && route.hash !== file.hash) {
-        console.log(`[${this.uri}] updating... ${_id} -> ${file.hash}`)
-        Object.assign(route, file)
-        await route.save()
-        console.log(`[${this.uri}] [UPDATED] ${_id} -> ${route.hash}`)
+        if (file.content && file.hash && route.hash !== file.hash) {
+          // console.log(`[${this.uri}] updating... ${_id} -> ${file.hash}`)
+          Object.assign(route, file)
+          await route.save()
+          console.log(`[${this.uri}] [UPDATED] ${_id} -> ${route.hash}`)
+        }
+        return
       }
-      return
+      else {
+        this.add(fullpath)
+      }
+    } catch (error) {
+      console.log(`[${this.uri}] [UPDATED] ${_id} -> ${route.hash}`)
     }
+    console.log(`[${this.uri}] [CHANGE] ${fullpath}`)
   }
   async unlink (fullpath) {
-    console.log(`[${this.uri}] unlink ${fullpath}`)
+    const _id = path.parse(fullpath).name
+    try {
+      if (!ENABLE_ROUTES_SOURCE_SYNC_DELETE) {
+        console.log(`[${this.uri}] [WARN] ENABLE_ROUTES_SOURCE_SYNC_DELETE is disabled! ${fullpath} not removed from data base`)
+        return
+      }
+      // console.log(`[${this.uri}] [REMOVE] ${_id}`)
+      await Routes.deleteOne({_id})
+      console.log(`[${this.uri}] [DELETED] ${_id}`)
+    } catch (error) {
+      console.log(`[${this.uri}] [DELETE] Cant removeve ${_id}`, error)
+    }
+    console.log(`[${this.uri}] [UNLINK] ${fullpath}`)
   }
+
   async error (fullpath) {
-    console.log(`[${this.uri}] error ${fullpath}`)
+    console.log(`[${this.uri}] [FILE ERROR] ${fullpath}`)
   }
 
   async fetchSourceFiles () {

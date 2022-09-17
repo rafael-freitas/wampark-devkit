@@ -8,7 +8,7 @@ const DatabaseError = app.ApplicationError
 
 const { ObjectId } = mongoose.Types
 
-function parseDateToISODate (target) {
+function parseMongoObjects (target) {
   // so aceitar objeto ou array
   if (!['object', 'array'].includes(typeof target)) {
     return target
@@ -32,7 +32,7 @@ function parseDateToISODate (target) {
       } else if (typeof element.$objectid === 'string') {
         target[i] = ObjectId(element.$objectid)
       } else {
-        parseDateToISODate(element)
+        parseMongoObjects(element)
       }
     }
   }
@@ -42,10 +42,10 @@ function parseDateToISODate (target) {
 export default function (ModelSchema, ErrorModule = DatabaseError) {
   Object.assign(ModelSchema.statics, {
 
-    parseDateToISODate,
+    parseMongoObjects,
 
     /**
-     * Retorna um
+     * 
      */
     unshiftDefaultPipelineMatch (pipeline) {
       if (Array.isArray(pipeline)) {
@@ -63,13 +63,13 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
       const { populate = '', isLean = true } = options
 
       // converter $date: "2019-05-11T21:03:35.773Z" -> ISODate("2019-05-11T21:03:35.773Z")
-      parseDateToISODate(query)
+      parseMongoObjects(query)
 
       return this.findOne(query, fields, options)
-        .where('_deleted')
-        .equals(_deleted)
-        .where('_currentVersion')
-        .equals(true)
+        // .where('_deleted')
+        // .equals(_deleted)
+        // .where('_currentVersion')
+        // .equals(true)
         .populate(populate)
         .lean(isLean)
         .exec()
@@ -99,20 +99,20 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
       }
 
       // converter $date: "2019-05-11T21:03:35.773Z" -> ISODate("2019-05-11T21:03:35.773Z")
-      parseDateToISODate(query)
+      parseMongoObjects(query)
 
       const data = await this.find(query, fields, options)
-        .where('_deleted')
-        .equals(false)
-        .where('_currentVersion')
-        .equals(true)
+        // .where('_deleted')
+        // .equals(false)
+        // .where('_currentVersion')
+        // .equals(true)
         .populate(populate)
         .lean(isLean)
         .exec()
 
       // se tiver paginacao ativa
       if (limit > 0) {
-        total = await this.countDocuments({ ...query, _deleted: false, _currentVersion: true })
+        total = await this.countDocuments({ ...query })
       } else {
         total = data.length
       }
@@ -173,8 +173,8 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
       this.unshiftDefaultPipelineMatch(pipeline)
 
       // converter $date: "2019-05-11T21:03:35.773Z" -> ISODate("2019-05-11T21:03:35.773Z")
-      parseDateToISODate(pipeline)
-      parseDateToISODate(countPipeline)
+      parseMongoObjects(pipeline)
+      parseMongoObjects(countPipeline)
 
       // se tiver paginacao ativa
       try {
@@ -187,13 +187,13 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
             const [countTotal = {}] = result
             // checar se o total foi retornado pelo aggregate
             if (typeof countTotal.total === 'undefined') {
-              throw new DatabaseError('SA001: O countPipeline deve projetar o campo "total"')
+              throw new DatabaseError('db.common.findByAggregate.E001: countPipeline must project prop "total"')
             }
             total = countTotal.total
           }
         }
       } catch (error) {
-        throw new DatabaseError('SA002: Erro ao executar contagem dos dados em findByAggregate()', error)
+        throw new DatabaseError('db.common.findByAggregate.E002: aggregate execution fail', error)
       }
 
       try {
@@ -226,7 +226,7 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
           data
         }
       } catch (error) {
-        throw new DatabaseError('SA003: Erro ao executar aggregate em findByAggregate()', error)
+        throw new DatabaseError('db.common.findByAggregate.E003: count aggregate execution fail', error)
       }
     },
 
@@ -250,7 +250,7 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
       let total = 0
 
       // converter $date: "2019-05-11T21:03:35.773Z" -> ISODate("2019-05-11T21:03:35.773Z")
-      parseDateToISODate(query)
+      parseMongoObjects(query)
 
       const data = await this.find(query, fields, options)
         .populate(populate)
@@ -288,10 +288,9 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
      * @return {Promise<Object>} Retorna o documento selecionado
      */
     async findAndSave (query, data = {}) {
-      if (!isObject(query) || isEmpty(query)) {
-        return Promise.reject(new ErrorModule('CMM-B002: Objeto de query é inválido'))
-      }
-
+      DatabaseError.assert(isObject(query), 'db.common.findAndSave.A001: query is required')
+      DatabaseError.assert(!isEmpty(query), 'db.common.findAndSave.A002: query is empty')
+      
       // remover controle de versao do mongoose
       delete data.__v
 
@@ -301,21 +300,27 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
       }
 
       // converter $date: "2019-05-11T21:03:35.773Z" -> ISODate("2019-05-11T21:03:35.773Z")
-      parseDateToISODate(query)
+      parseMongoObjects(query)
 
       const doc = await this.findOne(query)
-        .where('_deleted')
-        .equals(false)
-        // salvar sempre no rascunho
-        .where('published')
-        .equals(false)
+        // .where('_deleted')
+        // .equals(false)
+        // // salvar sempre no rascunho
+        // .where('published')
+        // .equals(false)
         .exec()
 
-      if (!doc) return Promise.reject(new ErrorModule('CMM-B003: Documento não encontrado ou não há versao de rascunho'))
+      if (!doc) {
+        throw new DatabaseError('db.common.findAndSave.E002: document not found to execute update')
+      }
       // mesclar o documento recuperado do banco com os novos dados a serem atualizado
       Object.assign(doc, data)
 
-      return doc.save()
+      try {
+        return doc.save()
+      } catch (err) {
+        throw DatabaseError.parse(err)
+      }
     },
 
     /**
@@ -328,12 +333,8 @@ export default function (ModelSchema, ErrorModule = DatabaseError) {
      * @return {Promise<Object>}
      */
     logicalRemove (query = [], _deletedBy) {
-      if (!_deletedBy) {
-        return Promise.reject(new ErrorModule('CMM-A001: Id do usuário obrigatório'))
-      }
-      if (!Array.isArray(query)) {
-        return Promise.reject(new ErrorModule('CMM-A002: Array enviado inválido'))
-      }
+      DatabaseError.assert(Array.isArray(query), 'db.common.logicalRemove.A001: must to be and array')
+      DatabaseError.assert(!isEmpty(_deletedAt), 'db.common.logicalRemove.A002: _deletedAt is empty')
 
       if (typeof _deletedBy === 'object') {
         _deletedBy = _deletedBy._id

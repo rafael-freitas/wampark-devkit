@@ -12,11 +12,11 @@ const uuid = function (str) {
 
 export default function (ModelSchema) {
   ModelSchema.pre('validate', function (next) {
-    this._id = this.path
+    this._id = this[MODEL_ROUTES_ENDPOINT]
     this.___uuid = this._uuid
     // gerar um uuid unico na primeira vez q salvar pra identificar o registro
     if (!this._uuid) {
-      this._uuid = uuid(Date.now() * Math.random())
+      this._uuid = uuid(String(Date.now() * Math.random()))
     }
     if (!this.header) {
       this.header = ''

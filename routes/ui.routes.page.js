@@ -52,7 +52,6 @@ export default class UiComponent extends app.Route {
             events: [
               {
                 on: 'click',
-                target: 'server',
                 endpointPrefix: false,
                 endpoint: 'ui.routes.toolbar.save'
               }
@@ -88,7 +87,6 @@ export default class UiComponent extends app.Route {
             events: [
               {
                 on: 'click',
-                target: 'server',
                 endpointPrefix: false,
                 endpoint: 'ui.routes.toolbar.delete'
               }
@@ -104,7 +102,6 @@ export default class UiComponent extends app.Route {
             events: [
               {
                 on: 'click',
-                target: 'server',
                 endpointPrefix: false,
                 endpoint: 'ui.routes.toolbar.execute'
               }
@@ -120,7 +117,6 @@ export default class UiComponent extends app.Route {
           //   events: [
           //     {
           //       on: 'click',
-          //       target: 'server',
           //       endpointPrefix: false,
           //       endpoint: 'ui.routes.toolbar.export'
           //     }
@@ -136,7 +132,6 @@ export default class UiComponent extends app.Route {
             events: [
               {
                 on: 'click',
-                target: 'server',
                 endpointPrefix: false,
                 endpoint: 'ui.routes.toolbar.import'
               }
@@ -160,18 +155,21 @@ export default class UiComponent extends app.Route {
                   label: 'Export',
                   type: 'primary',
                   plain: true,
+                  events: [
+                    {
+                      on: 'click',
+                      endpointPrefix: false,
+                      args: { command: 'route' },
+                      endpoint: 'ui.routes.toolbar.export'
+                    }
+                  ]
                 },
               ],
 
               dropdown: [
                 {
                   component: 'el-dropdown-item',
-                  label: 'Export selected route',
-                  command: 'route',
-                },
-                {
-                  component: 'el-dropdown-item',
-                  label: 'Export a route pack',
+                  label: 'Create a pack',
                   command: 'pack',
                 },
               ]

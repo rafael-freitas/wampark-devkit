@@ -132,6 +132,7 @@ export function startEngine (routes, options = {}) {
       join(__dirname, 'routes/ui.routes.toolbar.execute.js'),
       join(__dirname, 'routes/ui.routes.toolbar.export.js'),
       join(__dirname, 'routes/ui.routes.toolbar.import.js'),
+      join(__dirname, 'routes/ui.routes.cells.hash.requestCellValue.js'),
       join(__dirname, 'routes/ui.routes.importRoute.onUploadSuccess.js'),
       join(__dirname, 'routes/ui.routes.importRoute.step2.js'),
       join(__dirname, 'routes/ui.routes.importRoute.step3.js'),

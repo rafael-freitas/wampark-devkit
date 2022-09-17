@@ -1,8 +1,27 @@
 import app from 'wampark'
 import Routes from '../db/models/routes/index.js'
+import path from 'path'
+import fs from 'fs'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 const MODEL_ROUTES_CONTENT = process.env.MODEL_ROUTES_CONTENT
+
+/**
+ * fuzzy search array
+ * @param {Array} list 
+ * @param {String} props row props to search. ex: "name description otherField"
+ * @param {String} searchValue keyword
+ * @returns {Array} filtered list
+ */
+function fuzzySearch (list, props, searchValue) {
+  props = props.split(' ')
+  let buf = ".*" + searchValue.replace(/(.)/g, "$1.*").toLowerCase()
+  var reg = new RegExp(buf)
+  let newList = list.filter((e) => {
+    return props.map(p => reg.test(String(e[p]).toLowerCase())).includes(true)
+  })
+  return newList
+}
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -19,13 +38,11 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    const { default: fs} = await import('fs')
 
     const { filepath } = kwargs
 
-    const dialog = this.clientApplication.component('#dialogUploadRoute')
-    const viewport = this.clientApplication.component('#viewport')
-    const btnNext = this.clientApplication.component('#btnNext')
+    const dialog = this.component('dialogUploadRoute')
+    const viewport = this.component('viewport')
 
     let rawdata
     let fileData
@@ -36,12 +53,12 @@ export default class UiComponent extends app.Route {
       fileData = JSON.parse(rawdata)
       
       if (!rawdata || !fileData) {
-        viewport.method('Notification', {
+        viewport.Notification({
           type: 'error',
           title: 'Invalid file',
           message: `E001: The file ${filepath} is not a JSON route file`
         })
-        dialog.method('close')
+        dialog.close()
         return
       }
 
@@ -49,45 +66,45 @@ export default class UiComponent extends app.Route {
       if (fileData.data) {
         isPack = true
         if (fileData.data.length < 1) {
-          viewport.method('Notification', {
+          viewport.Notification({
             type: 'error',
             title: 'Invalid pack',
             message: `E002: The file ${filepath} there is no a route list`
           })
-          dialog.method('close')
+          dialog.close()
           return
         }
       } else {
         if (!fileData._id || !fileData.hash) {
-          viewport.method('Notification', {
+          viewport.Notification({
             type: 'error',
             title: 'Invalid file',
             message: `E003: The file ${filepath} is not a JSON route file`
           })
-          dialog.method('close')
+          dialog.close()
           return
         }
       }
     } catch (err) {
       console.error('Error to import JSON route file', err)
-      viewport.method('Notification', {
+      viewport.Notification({
         type: 'error',
         title: 'File error',
         message: `Fail to open or parse ${filepath}: ${err.toString()}`
       })
-      dialog.method('close')
+      dialog.close()
       return
     }
 
 
     // remover todos os componentes do dialog
-    dialog.method('clearSlot', 'main')
+    dialog.clearSlot('main')
 
-    dialog.method('addComponent', {
+    dialog.addComponent({
       slot: 'footer',
       component: 'i-button',
       type: 'primary',
-      label: 'Finish',
+      label: 'Import',
       events: [
         {
           on: 'click',
@@ -98,21 +115,179 @@ export default class UiComponent extends app.Route {
     })
 
     if (isPack) {
-      dialog.method('addComponent', {
-        slot: 'main',
-        modelState: 'dialog',
-        component: 'c-text',
-        content: 'Pack list: ' + JSON.stringify(fileData.data.map(x => x._id))
+      const filename = path.parse(filepath).name
+      const data = fileData.data.map(x => {
+        return {
+          _id: x._id,
+          hash: x.hash,
+        }
       })
+
+      const dataset = {
+        total: data.length,
+        data
+      }
+      dialog.addComponent({
+        component: 'c-grid',
+        row: [
+          {
+            span: 24,
+            slot: [
+              {
+                component: 'c-text',
+                content: `Checkout your route pack: ${filename}`
+              }
+            ]
+          },
+
+          {
+            span: 24,
+            slot: [
+              {
+                component: 'c-text',
+                content: `Pack items: ${data.length}`
+              },
+              // {
+              //   component: 'c-text',
+              //   id: 'dialogImportPackTotal',
+              //   content: `0`
+              // }
+            ]
+          },
+
+          {
+            span: 24,
+            slot: [
+              {
+                component: 'i-input',
+                statePath: 'filterQuery',
+                label: 'Filter:',
+                methods: {
+                  // fuzzySearch: String(fuzzySearch)
+                },
+                events: [
+                  {
+                    on: 'mounted',
+                    eval: String(() => this.focus())
+                  },
+                  {
+                    on: 'input',
+                    eval: String(() => {
+                      const table = this.getComponentById('tbImportRoutes')
+                      const dialog = this.getComponentById('dialogUploadRoute')
+                      clearTimeout(this.timer)
+                      this.timer = setTimeout(() => {
+                        table.updateDataset({
+                          data: dialog.state.dataset.data.filter(x => 
+                            x._id.toLocaleLowerCase().includes(String(this.value.value).toLocaleLowerCase())
+                          )
+                        })
+                      }, 5)
+                      
+                    })
+                  }
+                ]
+              }
+            ]
+          },
+
+          {
+            span: 24,
+            slot: [
+              {
+                component: 'i-button',
+                type: 'primary',
+                plain: true,
+                label: 'Select all',
+                events: [
+                  {
+                    on: 'click',
+                    eval: String(() => {
+                      const table = this.getComponentById('tbImportRoutes')
+                      table.refTable.value.toggleAllSelection()
+                    })
+                  }
+                ]
+              },
+            ]
+          },
+
+          {
+            span: 24,
+            slot: [
+              {
+                slot: 'main',
+                component: 'c-table',
+                id: 'tbImportRoutes',
+                enablePagination: false,
+                height: 400,
+                columns: [
+                  {
+                    slot: 'main',
+                    component: 'c-table-column',
+                    prop: '_id',
+                    label: '_id',
+                  },
+                  {
+                    slot: 'main',
+                    component: 'c-table-column',
+                    prop: 'hash',
+                    label: 'hash',
+                  },
+                  {
+                    slot: 'main',
+                    component: 'c-table-column',
+                    prop: '_id',
+                    label: 'current hash',
+                    events: [
+                      {
+                        on: 'requestCellValue',
+                        endpointPrefix: false,
+                        endpoint: 'ui.routes.cells.hash.requestCellValue'
+                      },
+                    ]
+                  },
+                ],
+                events: [
+                  // {
+                  //   on: 'mounted',
+                  //   eval: String(() => {
+                  //     const dialog = this.getComponentById('dialogUploadRoute')
+                  //     console.log(dialog.state.dataset)
+                  //   })
+                  // },
+                  // {
+                  //   on: 'requestDataset',
+                  //   endpoint: 'ui.documentos.itens.tbItens.requestDataset'
+                  // },
+                ]
+              }
+            ]
+          }
+
+        ],
+      })
+
 
       // STATE ----- atualizar state do dialog
-      dialog.method('setState', {
+      await dialog.setState({
         isPack,
         filepath: filepath,
+        dataset: dataset,
+        selecteds: []
       })
 
+      // dialog.setMethod('fuzzySearch', String(fuzzySearch))
+
+      // populate table
+      dialog.eval(String(() => {
+        const table = this.getComponentById('tbImportRoutes')
+        table.updateDataset(this.state.dataset)
+        // table.refTable.value.toggleAllSelection()
+      }))
+
     } else {
-      dialog.method('updateSlots', {
+      dialog.updateSlots({
         main: [
           {
             modelState: 'dialog',
@@ -128,6 +303,12 @@ export default class UiComponent extends app.Route {
                 message: "endpoint is riquered",
                 trigger: ['blur', 'change'],
               }
+            ],
+            events: [
+              {
+                on: 'mounted',
+                eval: String(() => this.focus())
+              },
             ]
           },
 
@@ -145,11 +326,8 @@ export default class UiComponent extends app.Route {
         ],
       })
 
-      const dialog_txtEndpoint = await this.clientApplication.component('#dialog_txtEndpoint')
-      dialog_txtEndpoint.method('focus')
-
         // STATE ----- atualizar state do dialog
-      dialog.method('setState', {
+      dialog.setState({
         endpoint: fileData._id,
         hash: fileData.hash,
         filepath: filepath,
