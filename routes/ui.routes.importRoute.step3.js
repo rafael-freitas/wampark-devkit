@@ -84,7 +84,7 @@ export default class UiComponent extends app.Route {
           viewport.Notification({
             type: 'success',
             title: 'Pack import',
-            message: `Pack imported ${filtred.length} of ${fileData.data.length} items from ${filename}`
+            message: `Pack imported (${filtred.length}) of (${fileData.data.length}) items from ${filename}`
           })
           dialog.close()
           
