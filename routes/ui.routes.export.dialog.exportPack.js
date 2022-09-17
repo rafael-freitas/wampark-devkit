@@ -33,8 +33,6 @@ export default class UiComponent extends app.Route {
 
     const selecteds = JSON.stringify(state.selectedRoutes)
 
-    console.log(`selecteds`, selecteds)
-
     return viewport.method('downloadURI', `//${process.env.HTTP_HOST}:${process.env.HTTP_PORT}/api/routes/download?selecteds=${selecteds}`, Date.now())
 
   }

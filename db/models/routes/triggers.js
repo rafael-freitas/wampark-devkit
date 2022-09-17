@@ -11,16 +11,12 @@ const uuid = function (str) {
 
 
 export default function (ModelSchema) {
-  // ModelSchema.pre('find', function () {
-  //   this.populate('componenteForm')
-  // })
-
   ModelSchema.pre('validate', function (next) {
     this._id = this.path
     this.___uuid = this._uuid
     // gerar um uuid unico na primeira vez q salvar pra identificar o registro
     if (!this._uuid) {
-      this._uuid = uuid(this._id + Date.now())
+      this._uuid = uuid(Date.now() * Math.random())
     }
     if (!this.header) {
       this.header = ''
@@ -31,21 +27,11 @@ export default function (ModelSchema) {
 
   ModelSchema.pre('update', async function (next) {
     if (this._update[MODEL_ROUTES_ENDPOINT]) {
-      this._update._uuid = uuid(this._update._id)
+      this._update._uuid = uuid(this._update[MODEL_ROUTES_ENDPOINT])
       // this._update.hash = uuid(this._update.content)
     }
     next()
   })
-
-  // ModelSchema.pre('update', async function (next) {
-  //   if (this._update.name) {
-  //     this._id = this.path
-  //     this.uuid = uuid(this._id)
-  //     // this._update._id = this.model.createRegistroId(this._update)
-  //     // this._update.uuid = uuid(this._update._id)
-  //   }
-  //   next()
-  // })
 
   ModelSchema.pre('save', async function (next) {
     // se alterar o name criar uma nova chave

@@ -1,6 +1,7 @@
 
 import _ from 'lodash'
 import { v5 as _uuid } from 'uuid'
+import md5 from 'md5'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 
@@ -29,7 +30,7 @@ export default function (modelSchema) {
         header = Date.now()
         content = Date.now()
       }
-      return _uuid(header + content, _uuid.URL)
+      return _uuid(md5(header + content), _uuid.URL)
     },
 
     parseFileContent(str) {
