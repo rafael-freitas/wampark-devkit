@@ -3,10 +3,9 @@ import shell from 'shelljs'
 import path from 'path'
 import fs from 'fs'
 import _ from 'lodash'
-import { v5 as uuid } from 'uuid'
+
 import chokidar from 'chokidar'
 
-import RouteSandbox from '../lib/RouteSandbox.js'
 import Routes from '../db/models/routes/index.js'
 
 
@@ -19,9 +18,9 @@ const ROUTES_PREFIX = 'services.syncSourceFiles'
 
 const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'routes')
 
-const ENABLE_ROUTES_SOURCE = Number(process.env.ENABLE_ROUTES_SOURCE)
 const ENABLE_ROUTES_SOURCE_SYNC = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC)
 const ENABLE_ROUTES_SOURCE_SYNC_DELETE = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_DELETE)
+const ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE)
 
 if (process.env.ROUTES_SOURCE_DIR) {
   shell.mkdir('-p', SOURCE_DIR)
@@ -148,6 +147,12 @@ export default class SyncSourceFilesRoute extends app.Route {
       if (!fs.existsSync(sourcePath)) {
         console.log(`[${this.uri}] [ADD] ${route._id} -> ${route.hash}`)
         fs.writeFileSync(sourcePath, Routes.generateFileContent(route))
+      }
+      else {
+        if (ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE) {
+          console.log(`[${this.uri}] [UPDATE] force update ${route._id} -> ${route.hash}`)
+          fs.writeFileSync(sourcePath, Routes.generateFileContent(route))
+        }
       }
     }
   }

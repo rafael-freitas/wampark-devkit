@@ -1,9 +1,13 @@
 import app from 'wampark'
+import path from 'path'
+import fs from 'fs'
 import Routes from '../db/models/routes/index.js'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
 const MODEL_ROUTES_CONTENT = process.env.MODEL_ROUTES_CONTENT
 const MODEL_ROUTES_UPDATEAT = process.env.MODEL_ROUTES_UPDATEAT
+const ENABLE_ROUTES_SOURCE_SYNC = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC)
+const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'routes')
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -24,26 +28,6 @@ export default class UiComponent extends app.Route {
 
     const viewport = this.component('viewport')
     const navlistLeft = this.component('navlistLeft')
-
-    // try {
-    //   confirmSave = await viewport.MessageBox({
-    //     title: 'Confirm',
-    //     message: 'Continue to save it?',
-    //     showCancelButton: true,
-    //     confirmButtonText: 'OK',
-    //     cancelButtonText: 'Cancel',
-    //   })
-    // } catch (error) {
-    //   viewport.Message({
-    //     type: 'info',
-    //     message: 'Save data canceled',
-    //   })
-    //   return false
-    // }
-
-    // if (!confirmSave) {
-    //   return false
-    // }
     
     // obter dados do formulario
     const state = await viewport.method('getState')
@@ -65,6 +49,11 @@ export default class UiComponent extends app.Route {
               // title: 'Updated!',
               message: `${state._id} updated OK!`
             })
+            if (ENABLE_ROUTES_SOURCE_SYNC) {
+              const sourcePath = path.join(SOURCE_DIR, doc._id + '.js')
+              console.log(`[${this.uri}] UPDATE] ${doc._id} -> ${doc.hash}`)
+              fs.writeFileSync(sourcePath, Routes.generateFileContent(doc))
+            }
           } else {
             doc = new Routes({
               [MODEL_ROUTES_ENDPOINT]: state.endpoint,
@@ -79,6 +68,11 @@ export default class UiComponent extends app.Route {
               // title: 'Updated!',
               message: `${doc._id} created OK!`
             })
+            if (ENABLE_ROUTES_SOURCE_SYNC) {
+              const sourcePath = path.join(SOURCE_DIR, doc._id + '.js')
+              console.log(`[${this.uri}] UPDATE] ${doc._id} -> ${doc.hash}`)
+              fs.writeFileSync(sourcePath, Routes.generateFileContent(doc))
+            }
             // this.clientApplication.notify.success('Object saved!', 'Alright!!')
           }
           // atualizar o formulario
