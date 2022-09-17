@@ -92,7 +92,7 @@ export default class ExecuteRoutesRoute extends app.Route {
           fs.writeFileSync(sourcePath, doc.getFileContent())
         }
 
-        if (this.routes[route._id] && this.routes[route._id] !== route.hash) {
+        if (this.routes[route._id] !== route.hash) {
           this.log.info(`[SOURCE] Updating... <${this.log.colors.yellow(sourcePath)}>`)
           const doc = await Routes.findOne({_id: route._id})
           fs.writeFileSync(sourcePath, doc.getFileContent())
