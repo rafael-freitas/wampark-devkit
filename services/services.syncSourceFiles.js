@@ -111,7 +111,7 @@ export default class SyncSourceFilesRoute extends app.Route {
     for (const route of routes) {
       const sourcePath = path.join(SOURCE_DIR, route._id + '.js')
       if (!fs.existsSync(sourcePath)) {
-        console.log(`[${this.uri}] [ADD] ${_id} -> ${route.hash}`)
+        console.log(`[${this.uri}] [ADD] ${route._id} -> ${route.hash}`)
         fs.writeFileSync(sourcePath, Routes.generateFileContent(route))
       }
     }
