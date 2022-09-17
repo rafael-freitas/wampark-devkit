@@ -1,6 +1,6 @@
 {
   "name": "wampark-devkit",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "description": "Node.js Application Architecture Devkit for big WAMP (Web Application Message Protocol) based applications and microservices",
   "main": "index.js",
   "type": "module",
