@@ -20,7 +20,7 @@ export default class UiComponent extends app.Route {
 
     let { limit, skip, query } = kwargs
 
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
+    const navlistLeft = this.component('navlistLeft')
 
     query = query.toLowerCase()
 
@@ -30,17 +30,17 @@ export default class UiComponent extends app.Route {
       queryObject = createMongoFieldSearchQueryAnd('_id', query)
     }
 
-    const resultset = await Routes.findByAggregate(queryObject, {}, {
+    const resultset = await Routes.findBy(queryObject, '_id endpoint', {
       limit, skip, sort: {_id: 1}
     })
 
     // console.log('resultset', resultset)
 
     if (skip === 0) {
-      await navlistLeft.method('clearDataset')
+      await navlistLeft.clearDataset()
     }
 
-    navlistLeft.method('updateDataset', resultset)
+    navlistLeft.updateDataset(resultset)
   }
 }
 

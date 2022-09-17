@@ -17,25 +17,24 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    // console.log('endpoint', args, kwargs, details)
 
     // layout -------------------
 
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
-    viewport.method('setWindowTitle', `Application Routes (${ROUTES_PREFIX})`)
+    viewport.setWindowTitle(`Application Routes (${ROUTES_PREFIX})`)
 
-    viewport.method('addHotkeys', 'ctrl+s, command+s', {
+    viewport.addHotkeys('ctrl+s, command+s', {
       endpointPrefix: false,
       endpoint: 'ui.routes.toolbar.save'
     })
     
-    viewport.method('updateProps', {
+    viewport.updateProps({
       labelPosition: 'top',
       labelWidth: 'auto'
     })
 
-    viewport.method('addComponent', {
+    viewport.addComponent({
       component: 'layout-dual-aside',
       id: 'pageLayout',
       title: 'Routes',
@@ -79,18 +78,41 @@ export default class UiComponent extends app.Route {
           },
 
           {
-            component: 'i-button',
-            name: 'btnDelete',
-            label: 'Delete',
-            type: 'danger',
-            plain: true,
+            component: 'c-dropdown',
             events: [
               {
-                on: 'click',
+                on: 'command',
                 endpointPrefix: false,
                 endpoint: 'ui.routes.toolbar.delete'
               }
-            ]
+            ],
+
+            slots: {
+              main: [
+                {
+                  component: 'i-button',
+                  label: 'Delete',
+                  type: 'danger',
+                  plain: true,
+                  events: [
+                    {
+                      on: 'click',
+                      endpointPrefix: false,
+                      args: { command: 'route' },
+                      endpoint: 'ui.routes.toolbar.delete'
+                    }
+                  ]
+                },
+              ],
+
+              dropdown: [
+                {
+                  component: 'el-dropdown-item',
+                  label: 'Bulk delete',
+                  command: 'bulk',
+                },
+              ]
+            }
           },
 
           {
@@ -107,21 +129,6 @@ export default class UiComponent extends app.Route {
               }
             ]
           },
-
-          // {
-          //   component: 'i-button',
-          //   name: 'btnExport',
-          //   label: 'Export',
-          //   type: 'primary',
-          //   plain: true,
-          //   events: [
-          //     {
-          //       on: 'click',
-          //       endpointPrefix: false,
-          //       endpoint: 'ui.routes.toolbar.export'
-          //     }
-          //   ]
-          // },
 
           {
             component: 'i-button',

@@ -24,9 +24,9 @@ export default class UiComponent extends app.Route {
   }
 
   async addDialogImport () {
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
-    await viewport.method('addDialog', {
+    await viewport.addDialog({
       id: 'dialogUploadRoute',
       //width: 'auto',
       title: 'Import routes',

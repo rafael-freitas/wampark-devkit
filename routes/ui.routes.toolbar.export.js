@@ -19,14 +19,14 @@ export default class UiComponent extends app.Route {
 
     const { command } = kwargs
 
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
+    const navlistLeft = this.component('navlistLeft')
     const selected = await navlistLeft.method('getSelected')
 
     if (command === 'route') {
       if (!selected || !selected._id) {
-        viewport.method('Message', {
+        viewport.Message({
           type: 'info',
           message: 'Select a record to export',
         })
@@ -40,9 +40,9 @@ export default class UiComponent extends app.Route {
   }
 
   async addDialogExport () {
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
-    await viewport.method('addDialog', {
+    await viewport.addDialog({
       id: 'dialogExportRoutes',
       //width: 'auto',
       title: 'Export routes',
@@ -114,7 +114,7 @@ export default class UiComponent extends app.Route {
       }
     })
 
-    const input = this.clientApplication.component('#dialog_txtQuery')
+    const input = this.component('dialog_txtQuery')
     input.method('focus')
   }
 }

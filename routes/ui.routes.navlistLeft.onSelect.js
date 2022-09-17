@@ -25,24 +25,24 @@ export default class UiComponent extends app.Route {
   async endpoint (args = [], kwargs = {}, details = {}) {
     // console.log('ui.routes.navlistLeft.onSelect', args, kwargs, details)
 
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
+    const navlistLeft = this.component('navlistLeft')
     const selected = await navlistLeft.method('getSelected')
 
     const doc = await Routes.findOne({_id: selected._id})
 
     if (doc) {
-      viewport.method('setState', doc)
+      viewport.setState(doc)
     } else {
-      viewport.method('Message', {
+      viewport.Message({
         type: 'warn',
         message: `[WARN] Using selected content insted database record. Be careful!`
       })
-      viewport.method('setState', selected)
+      viewport.setState(selected)
     }
 
-    viewport.method('setWindowTitle', `${selected._id}`)
+    viewport.setWindowTitle(`${selected._id}`)
     
   }
 }

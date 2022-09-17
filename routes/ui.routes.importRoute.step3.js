@@ -37,10 +37,10 @@ export default class UiComponent extends app.Route {
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
 
-    const viewport = this.component('#viewport')
-    const navlistLeft = this.component('#navlistLeft')
-    const dialog = this.component('#dialogUploadRoute')
-    const btnNext = this.component('#btnNext')
+    const viewport = this.component('viewport')
+    const navlistLeft = this.component('navlistLeft')
+    const dialog = this.component('dialogUploadRoute')
+    const btnNext = this.component('btnNext')
 
     btnNext.disable(true)
 
@@ -108,7 +108,7 @@ export default class UiComponent extends app.Route {
             
           }
           // selecionar o registro atual
-          navlistLeft.method('setSelected', doc)
+          navlistLeft.setSelected( doc)
         }
       } catch (err) {
         const error = app.ApplicationError.parse(err)

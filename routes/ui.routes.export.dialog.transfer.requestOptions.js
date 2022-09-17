@@ -22,9 +22,9 @@ export default class UiComponent extends app.Route {
 
     const limit = 250
 
-    const viewport = this.clientApplication.component('#viewport')
-    const dialog = this.clientApplication.component('#dialogExportRoutes')
-    const transfer = this.clientApplication.component('#transferExportRoutes')
+    const viewport = this.component('viewport')
+    const dialog = this.component('dialogExportRoutes')
+    const transfer = this.component('transferExportRoutes')
 
     const state = await dialog.method('getState')
 
@@ -43,7 +43,7 @@ export default class UiComponent extends app.Route {
     })
 
     if (resultset.total > limit) {
-      viewport.method('Message', {
+      viewport.Message({
         type: 'warn',
         message: `Max items were be reached. Max items is ${limit}`
       })

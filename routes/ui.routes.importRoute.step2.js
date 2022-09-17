@@ -19,13 +19,13 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    const dialog = this.clientApplication.component('#dialogUploadRoute')
+    const dialog = this.component('dialogUploadRoute')
 
-    const inputUpload = this.clientApplication.component('#inputUpload')
+    const inputUpload = this.component('inputUpload')
 
-    const btnNext = this.clientApplication.component('#btnNext')
+    const btnNext = this.component('btnNext')
 
-    btnNext.method('updateProps', {
+    btnNext.updateProps({
       disabled: true
     })
 

@@ -23,10 +23,10 @@ export default class UiComponent extends app.Route {
 
     // console.log('ui.routes.toolbar.execute details', details)
 
-    const viewport = this.clientApplication.component('#viewport')
+    const viewport = this.component('viewport')
 
     try {
-      confirmAction = await viewport.method('MessageBox', {
+      confirmAction = await viewport.MessageBox({
         title: 'Execute a file',
         message: 'Execute this file on server?',
         showCancelButton: true,
@@ -34,7 +34,7 @@ export default class UiComponent extends app.Route {
         cancelButtonText: 'Cancel',
       })
     } catch (error) {
-      viewport.method('Message', {
+      viewport.Message({
         type: 'info',
         message: 'Execute canceled',
       })
@@ -45,7 +45,7 @@ export default class UiComponent extends app.Route {
       return false
     }
 
-    viewport.method('Message', {
+    viewport.Message({
       type: 'info',
       message: 'Running route...',
     })
@@ -64,7 +64,7 @@ export default class UiComponent extends app.Route {
       this.log.info(`Excuted by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}] <${this.log.colors.silly(route._id)}>`)
       const result = await sandbox.route(route._id, {})
 
-      viewport.method('MessageBox', {
+      viewport.MessageBox({
         title: 'Result',
         message: JSON.stringify(result) || '(no return)',
         // showCancelButton: true,

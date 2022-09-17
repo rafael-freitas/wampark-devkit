@@ -22,11 +22,11 @@ export default class UiComponent extends app.Route {
   async endpoint (args = [], kwargs = {}, details = {}) {
     let confirmSave = false
 
-    const viewport = this.clientApplication.component('#viewport')
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
+    const viewport = this.component('viewport')
+    const navlistLeft = this.component('navlistLeft')
 
     // try {
-    //   confirmSave = await viewport.method('MessageBox', {
+    //   confirmSave = await viewport.MessageBox({
     //     title: 'Confirm',
     //     message: 'Continue to save it?',
     //     showCancelButton: true,
@@ -34,7 +34,7 @@ export default class UiComponent extends app.Route {
     //     cancelButtonText: 'Cancel',
     //   })
     // } catch (error) {
-    //   viewport.method('Message', {
+    //   viewport.Message({
     //     type: 'info',
     //     message: 'Save data canceled',
     //   })
@@ -60,7 +60,7 @@ export default class UiComponent extends app.Route {
               header: state.header,
             })
             // this.clientApplication.notify.success('Object updated!', 'Alright!!')
-            viewport.method('Message', {
+            viewport.Message({
               type: 'success',
               // title: 'Updated!',
               message: `${state._id} updated OK!`
@@ -74,7 +74,7 @@ export default class UiComponent extends app.Route {
             })
             // salvar no banco
             await doc.save()
-            viewport.method('Message', {
+            viewport.Message({
               type: 'success',
               // title: 'Updated!',
               message: `${doc._id} created OK!`
@@ -85,7 +85,7 @@ export default class UiComponent extends app.Route {
           await viewport.method('updateState', doc)
           
           // selecionar o registro atual
-          navlistLeft.method('setSelected', doc)
+          navlistLeft.setSelected( doc)
         } catch (error) {
           console.error('Error', error)
           viewport.method('Notification', {
@@ -96,7 +96,7 @@ export default class UiComponent extends app.Route {
         }
 
         // atualizar nav-list
-        await navlistLeft.method('handleQuickSearch')
+        await navlistLeft.handleQuickSearch()
       }
     } catch (err) {
       console.log('FORM ERROR', err, model)

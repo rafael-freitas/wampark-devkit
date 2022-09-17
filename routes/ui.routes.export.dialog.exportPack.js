@@ -18,13 +18,13 @@ export default class UiComponent extends app.Route {
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
 
-    const viewport = this.clientApplication.component('#viewport')
-    const dialog = this.clientApplication.component('#dialogExportRoutes')
+    const viewport = this.component('viewport')
+    const dialog = this.component('dialogExportRoutes')
 
     const state = await dialog.method('getState')
 
     if (!state.selectedRoutes || state.selectedRoutes.length < 1) {
-      viewport.method('Message', {
+      viewport.Message({
         type: 'warn',
         message: `Please select 1 or more items to create a pack`
       })

@@ -17,11 +17,11 @@ export default class UiComponent extends app.Route {
   async endpoint (args = [], kwargs = {}, details = {}) {
     console.log('endpoint', args, kwargs, details)
 
-    const viewport = this.clientApplication.component('#viewport')
-    viewport.method('setState', {})
+    const viewport = this.component('viewport')
+    viewport.setState({})
 
-    const navlistLeft = this.clientApplication.component('#navlistLeft')
-    navlistLeft.method('setSelected', null)
+    const navlistLeft = this.component('navlistLeft')
+    navlistLeft.setSelected( null)
 
 
   }
