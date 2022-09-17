@@ -95,23 +95,31 @@ export function pathTo (file) {
  * @param {Array} routes Initial routes from config.routes.js
  */
 export function startEngine (routes, options = {}) {
+  Object.assign(options, process.env, options)
   let executeRoutesEnabled = false
   if (!Array.isArray(routes.autoload)) {
     routes.autoload = []
   }
-  if (options.ENABLE_ROUTES_EXECUTE_ENDPOINT || Number(process.env.ENABLE_ROUTES_EXECUTE_ENDPOINT)) {
+  if (Number(options.ENABLE_ROUTES_EXECUTE_ENDPOINT)) {
     executeRoutesEnabled = true
     routes.autoload = routes.autoload.concat([
       join(__dirname, 'services/services.executeRoute.js'),
     ])
   }
-  if (options.ENABLE_AUTHENTICATION_ENDPOINT || Number(process.env.ENABLE_AUTHENTICATION_ENDPOINT)) {
+  if (Number(options.ENABLE_AUTHENTICATION_ENDPOINT)) {
     routes.autoload = routes.autoload.concat([
       join(__dirname, 'services/services.authenticate.ticket.js'),
       join(__dirname, 'services/services.authorizer.js'),
     ])
   }
-  if (options.ENABLE_ROUTES_UI_ENDPOINT || Number(process.env.ENABLE_ROUTES_UI_ENDPOINT)) {
+
+  if (Number(process.env.ENABLE_ROUTES_SOURCE) && Number(process.env.ENABLE_ROUTES_SOURCE_SYNC) && process.env.ROUTES_SOURCE_DIR) {
+    console.log(`[engine] Enable sync source files`)
+    routes.autoload = routes.autoload.concat([
+      join(__dirname, 'services/services.syncSourceFiles.js'),
+    ])
+  }
+  if (Number(options.ENABLE_ROUTES_UI_ENDPOINT)) {
     if (!executeRoutesEnabled) {
       throw new app.ApplicationError('DEVKIT001: ENABLE_ROUTES_EXECUTE_ENDPOINT must be enabled')
     }

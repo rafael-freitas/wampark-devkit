@@ -25,13 +25,12 @@ export default function (ModelSchema) {
     if (!this.header) {
       this.header = ''
     }
-    this.hash = uuid(this.content + this.header + this._uuid)
+    this.hash = this.getHash()
     next()
   })
 
   ModelSchema.pre('update', async function (next) {
     if (this._update[MODEL_ROUTES_ENDPOINT]) {
-      this._update._id = ModelSchema.generateIdByDocument(this._update)
       this._update._uuid = uuid(this._update._id)
       // this._update.hash = uuid(this._update.content)
     }
