@@ -36,7 +36,7 @@ export default class UiComponent extends app.Route {
       queryObject = createMongoFieldSearchQueryAnd('_id', query)
     }
 
-    const resultset = await Routes.findByAggregate(queryObject, {
+    const resultset = await Routes.findBy(queryObject, '_id', {
       _id: 1
     }, {
       limit
