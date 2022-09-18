@@ -232,37 +232,38 @@ export default class UiComponent extends app.Route {
               main: [
                 {
                   component: 'c-grid',
-                  cols: {
-                    1: {span: 17},
-                    2: {span: 7}
-                  },
-            
-                  slots: {
-                    1: [
-                      {
-                        component: 'i-input',
-                        id: 'inputEndpoint',
-                        name: 'endpoint',
-                        label: 'Endpoint',
-                        rules: [
-                          {
-                            required: true,
-                            message: "routes name is riquered",
-                            trigger: "change",
-                          }
-                        ]
-                      }
-                    ],
-                    2: [
-                      {
-                        component: 'i-input',
-                        id: 'inputHash',
-                        name: 'hash',
-                        label: 'Hash',
-                        disabled: true,
-                      }
-                    ],
-                  }
+                  row: [
+                    {
+                      span: 17,
+                      slot: [
+                        {
+                          component: 'i-input',
+                          id: 'inputEndpoint',
+                          name: 'endpoint',
+                          label: 'Endpoint',
+                          rules: [
+                            {
+                              required: true,
+                              message: "routes name is riquered",
+                              trigger: "change",
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      span: 7,
+                      slot: [
+                        {
+                          component: 'i-input',
+                          id: 'inputHash',
+                          name: 'hash',
+                          label: 'Hash',
+                          disabled: true,
+                        }
+                      ]
+                    }
+                  ],
                 }
               ]
             }
@@ -277,29 +278,18 @@ export default class UiComponent extends app.Route {
               main: [
                 {
                   component: 'c-grid',
-                  cols: {
-                    1: {span: 24},
-                    2: {span: 24}
-                  },
-            
-                  slots: {
-                    1: [
-                      {
-                        component: 'i-code',
-                        id: 'inputHeader',
-                        name: 'header',
-                        label: 'Header'
-                      }
-                    ],
-                    2: [
-                      {
-                        component: 'i-code',
-                        id: 'inputContent',
-                        name: 'content',
-                        label: 'export default async function content ({kwargs})',
-                      }
-                    ],
-                  }
+                  row: [
+                    {
+                      span: 24,
+                      slot: [
+                        {
+                          component: 'i-code',
+                          id: 'inputContent',
+                          statePath: 'sourceCode',
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }

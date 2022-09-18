@@ -33,7 +33,13 @@ export default class UiComponent extends app.Route {
     const doc = await Routes.findOne({_id: selected._id})
 
     if (doc) {
-      viewport.setState(doc)
+      // atualizar o formulario
+      const document = Object.assign(doc.toObject(), {
+        header: null,
+        content: null,
+        sourceCode: doc.getFileContent()
+      })
+      await viewport.setState(document)
     } else {
       viewport.Message({
         type: 'warn',
