@@ -1,4 +1,6 @@
 import app from 'wampark'
+import Routes from '../db/models/routes/index.js'
+import dayjs from 'dayjs'
 
 export default class UiComponent extends app.Route {
   constructor () {
@@ -15,10 +17,24 @@ export default class UiComponent extends app.Route {
    * @param details
    */
   async endpoint (args = [], kwargs = {}, details = {}) {
-    console.log('endpoint', args, kwargs, details)
 
     const viewport = this.component('viewport')
-    viewport.setState({})
+    viewport.setState({
+      sourceCode: Routes.generateFileContent({
+        hash: String(Date.now()),
+        header: `/**
+ * 
+ * Endpoint
+ * 
+ * By ${details.caller_authid}
+ * Created: ${dayjs().format('YYYY-MM-DD')}
+ * Updated: ${dayjs().format('YYYY-MM-DD')}
+ * 
+*/
+`,
+        content: '',
+      })
+    })
 
     const navlistLeft = this.component('navlistLeft')
     navlistLeft.setSelected( null)
@@ -26,4 +42,3 @@ export default class UiComponent extends app.Route {
 
   }
 }
-

@@ -35,21 +35,19 @@ export default function (modelSchema) {
     },
 
     parseFileContent(str) {
-      const regex = /^(.*?)?(\n?export default async function(.*?){\n)(.*?)\n}$/gs
+      const regex = /^(.*?)?(\n?export default async function(.*?){?\n)(.*?)?\n}.*?/gs
       const parts = regex.exec(str)
 
       if (!parts) {
         return {
           hash: null,
-          header: null,
-          content: null,
+          header: str,
+          content: '// content moved to header',
         }
       }
 
       const header = parts[1]
       const content = parts[4]
-
-      // let header = parts[1].replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1').replace(/\n(.*?)\n\n$/, '$1')
 
       const hash = this.generateHash(header, content)
       return {

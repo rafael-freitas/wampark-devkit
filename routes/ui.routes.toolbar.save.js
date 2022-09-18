@@ -31,6 +31,9 @@ export default class UiComponent extends app.Route {
     
     // obter dados do formulario
     const state = await viewport.method('getState')
+    const fileParts = Routes.parseFileContent(state.sourceCode)
+    state.header = fileParts.header
+    state.content = fileParts.content
     try {
       const isValid = await viewport.method('isFormValid')
       if (isValid) {
@@ -76,29 +79,47 @@ export default class UiComponent extends app.Route {
             // this.clientApplication.notify.success('Object saved!', 'Alright!!')
           }
           // atualizar o formulario
-          await viewport.method('updateState', doc)
+          const document = Object.assign(doc.toObject(), {
+            header: null,
+            content: null,
+            sourceCode: doc.getFileContent()
+          })
+          await viewport.updateState(document)
           
           // selecionar o registro atual
           navlistLeft.setSelected( doc)
-        } catch (error) {
+        } catch (err) {
+          const error = this.ApplicationError.parse(err)
           console.error('Error', error)
-          viewport.method('Notification', {
+          switch (error.code) {
+            case 11000:
+              viewport.Notification({
+                type: 'error',
+                title: 'Routes',
+                message: `${state.endpoint} maybe exists! ${error.message}`
+              })
+            break
+          }
+
+          viewport.Notification({
             type: 'error',
-            title: 'Opss!',
-            message: error
+            title: 'Routes',
+            message: error.message
           })
+          
         }
 
         // atualizar nav-list
         await navlistLeft.handleQuickSearch()
       }
     } catch (err) {
-      console.log('FORM ERROR', err, model)
+      const error = this.ApplicationError.parse(err)
+      console.log(this.uri, error)
 
-      viewport.method('Notification', {
+      viewport.Notification({
         type: 'warning',
-        title: 'Formulário',
-        message: 'Preencha os campos obrigatórios do formulário'
+        title: 'Routes',
+        message: error.message
       })
     }
   }
