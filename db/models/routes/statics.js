@@ -23,7 +23,7 @@ export default function (modelSchema) {
 
       // wraper da funcao
       // assinatura: function content(kwargs, extraParams[])
-      return `${route.header}\nexport default async function ${DEFAULT_FUNCTION_NAME} ({${params.join(', ')}}) {\n${route.content}\n}`
+      return `${route.header}\nexport default async function ${DEFAULT_FUNCTION_NAME} ({ ${params.join(', ')} }) {\n${route.content}\n}`
     },
 
     generateHash (header, content) {
