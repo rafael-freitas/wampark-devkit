@@ -19,6 +19,7 @@ import { fileURLToPath } from 'url'
 // enable .env file
 dotenv.config({ path: '.env' })
 dotenv.config({ path: 'dev.env', override: true })
+dotenv.config({ path: 'prod.env', override: true })
 
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
