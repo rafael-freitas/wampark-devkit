@@ -37,7 +37,7 @@ export default function (ModelSchema) {
     // se alterar o name criar uma nova chave
     if (!this.isNew && this.isModified(MODEL_ROUTES_ENDPOINT)) {
       // remover registro antigo
-      await this.constructor.remove({ _uuid: this.___uuid })
+      await this.constructor.deleteOne({ _uuid: this.___uuid })
 
       // let doc = new this.constructor({
       //   ...this._doc
