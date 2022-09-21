@@ -25,7 +25,10 @@ export default class UiComponent extends app.Route {
         [MODEL_ROUTES_ENDPOINT]: endpoint,
       }))
       // salvar no banco
-      return doc.save()
+      await doc.save()
+
+      return doc.toObject()
+      
     }
   }
 
@@ -107,6 +110,7 @@ export default class UiComponent extends app.Route {
             })
             
           }
+          dialog.close()
           // selecionar o registro atual
           navlistLeft.setSelected( doc)
         }
