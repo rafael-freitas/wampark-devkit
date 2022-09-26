@@ -13,21 +13,14 @@ const uuid = function (str) {
 export default function (ModelSchema) {
   ModelSchema.pre('validate', function (next) {
     this._id = this[MODEL_ROUTES_ENDPOINT]
-    this.___uuid = this._uuid
-    // gerar um uuid unico na primeira vez q salvar pra identificar o registro
-    if (!this._uuid) {
-      this._uuid = uuid(String(Date.now() * Math.random()))
-    }
-    if (!this.header) {
-      this.header = ''
-    }
+    this.__id = this._id
     this.hash = this.getHash()
     next()
   })
 
   ModelSchema.pre('update', async function (next) {
     if (this._update[MODEL_ROUTES_ENDPOINT]) {
-      this._update._uuid = uuid(this._update[MODEL_ROUTES_ENDPOINT])
+      // this._update._uuid = uuid(this._update[MODEL_ROUTES_ENDPOINT])
       // this._update.hash = uuid(this._update.content)
     }
     next()
@@ -36,18 +29,13 @@ export default function (ModelSchema) {
   ModelSchema.pre('save', async function (next) {
     // se alterar o name criar uma nova chave
     if (!this.isNew && this.isModified(MODEL_ROUTES_ENDPOINT)) {
-      // remover registro antigo
-      await this.constructor.deleteOne({ _uuid: this.___uuid })
-
-      // let doc = new this.constructor({
-      //   ...this._doc
-      // })
-      // await doc.save()
+      // remove old record
+      await this.constructor.deleteOne({ _id: this.__id })
 
       const doc = { ...this._doc }
       delete doc.__v
       // doc.hash = uuid(doc.content + this._uuid)
-      await this.constructor.update({ _uuid: this._uuid }, doc, { upsert: true, runValidators: false, setDefaultsOnInsert: false })
+      await this.constructor.update({ _id: this._id }, doc, { upsert: true, runValidators: false, setDefaultsOnInsert: false })
       // throw new Error(`O _id do registro foi modificado.`)
       return next(false)
     }
