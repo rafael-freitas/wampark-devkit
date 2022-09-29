@@ -10,9 +10,9 @@ import Routes from '../db/models/routes/index.js'
 const RoutesError = app.ApplicationError
 
 // generate random WORKER ID wether no ID is specified
-const ROUTES_WORKER_ID = app.config.ROUTES_WORKER_ID || process.pid
+const ROUTES_WORKER_ID = process.env.ROUTES_WORKER_ID || process.pid
 
-const ROUTES_PREFIX = app.config.ROUTES_PREFIX || 'routes'
+const ROUTES_PREFIX = process.env.ROUTES_PREFIX || 'routes'
 
 const SNIPPET_DIR = path.join(path.resolve(), '.snippets')
 
