@@ -98,7 +98,7 @@ export function setup () {
 
   // ----------- WEBSERVER SETUP ----------
 
-  if (process.env.HTTP_ENABLE) {
+  if (parseInt(process.env.HTTP_ENABLE)) {
     const HTTP_PORT = process.env.HTTP_PORT || 3000
     webserver.listen(HTTP_PORT)
     webserver.HTTP_ENABLE = true
