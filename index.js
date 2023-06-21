@@ -12,6 +12,7 @@ import parseISODateToDateObject from './lib/db/parseISODateToDateObject.js'
 import { createReadStreamFromBuffer, getBufferFromStream } from './lib/streaming.js'
 import Routes from './db/models/routes/index.js'
 import SystemUsers from './db/models/system_users/index.js'
+import WebRoute from './lib/WebRoute.js'
 
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -45,7 +46,8 @@ export const lib = {
     getBufferFromStream
   },
   validators,
-  formatters
+  formatters,
+  WebRoute
 }
 
 /**
