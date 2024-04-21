@@ -9,7 +9,10 @@ const { ObjectId, Mixed } = Schema.Types
 
 const baseSchema = {
   
-
+  // _id: {
+  //   type: String,
+  //   default: () => uuidv4()
+  // }
 }
 
 /**
