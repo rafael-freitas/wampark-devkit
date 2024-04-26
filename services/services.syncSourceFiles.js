@@ -21,6 +21,7 @@ const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'rou
 const ENABLE_ROUTES_SOURCE_SYNC = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC)
 const ENABLE_ROUTES_SOURCE_SYNC_DELETE = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_DELETE)
 const ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE)
+const ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE_DB = Number(process.env.ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE_DB)
 
 if (process.env.ROUTES_SOURCE_DIR) {
   shell.mkdir('-p', SOURCE_DIR)
@@ -38,7 +39,7 @@ export default class SyncSourceFilesRoute extends app.Route {
     this.routes = {}
     this.watchers = {}
 
-    this.fetchSourceFiles()
+    // this.fetchSourceFiles()
   }
 
   installWatcher () {
@@ -108,7 +109,7 @@ export default class SyncSourceFilesRoute extends app.Route {
           // console.log(`[${this.uri}] updating... ${_id} -> ${file.hash}`)
           Object.assign(route, file)
           await route.save()
-          console.log(`[${this.uri}] [UPDATED] ${_id} -> ${route.hash}`)
+          console.log(`[${this.uri}] [UPDATE ROUTE] ${_id} -> ${route.hash}`)
         }
         return
       }
@@ -116,10 +117,11 @@ export default class SyncSourceFilesRoute extends app.Route {
         this.add(fullpath)
       }
     } catch (error) {
-      console.log(`[${this.uri}] [UPDATED] ${_id} -> ${route.hash}`)
+      console.log(`[${this.uri}] [UPDATE ROUTE ERROR] ${_id} -> ${route.hash}`)
     }
     console.log(`[${this.uri}] [CHANGE] ${fullpath}`)
   }
+
   async unlink (fullpath) {
     const _id = path.parse(fullpath).name
     try {
@@ -140,7 +142,40 @@ export default class SyncSourceFilesRoute extends app.Route {
     console.log(`[${this.uri}] [FILE ERROR] ${fullpath}`)
   }
 
-  async fetchSourceFiles () {
+  /**
+   * Função para retornar todos os arquivos de extensão .js de uma pasta
+   * @param {String} directoryPath 
+   * @returns {Array}
+   */
+  getJsFilesFromDir (directoryPath) {
+    try {
+        // Ler todos os arquivos da pasta
+        const files = fs.readdirSync(directoryPath);
+
+        // Filtrar apenas os arquivos com extensão .js
+        const jsFiles = files.filter(file => path.extname(file) === '.js');
+
+        return jsFiles;
+    } catch (err) {
+        console.error('Erro ao ler os arquivos da pasta:', err);
+        return [];
+    }
+  }
+
+  async fetchSourceFilesFromSourceFolder () {
+    
+    // ATUALIZAR ROUTE A PARTIR DO CODIGO FONTE (arquivo .js da rota)
+    if (ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE_DB) {
+      // buscar os arquivos fontes e checar se existe e deve atualizar o route no db
+      let sources = this.getJsFilesFromDir(SOURCE_DIR)
+      // console.log('sources', sources)
+      for (const filepath of sources) {
+        // console.log('SOURCE_DIR, filepath', SOURCE_DIR, filepath)
+        await this.change(path.resolve(SOURCE_DIR, filepath))
+      }
+    }
+  }
+  async fetchSourceFilesFromDatabase () {
     const routes = await Routes.find().lean()
     for (const route of routes) {
       const sourcePath = path.join(SOURCE_DIR, route._id + '.js')
@@ -157,7 +192,9 @@ export default class SyncSourceFilesRoute extends app.Route {
     }
   }
 
-  onAttachSuccess () {
+  async onAttachSuccess () {
+    await this.fetchSourceFilesFromSourceFolder()
+    await this.fetchSourceFilesFromDatabase()
     this.installWatcher()
   }
 
