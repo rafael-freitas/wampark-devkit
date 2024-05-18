@@ -36,6 +36,7 @@ export default class ExecuteRoutesRoute extends app.Route {
     // guardar as rotas importadas e os metodos indexados por hash
     this.routes = {}
     this.cache = {}
+    this.cacheSource = {}
   }
 
   setup (args = [], kwargs = {}, details = {}) {
@@ -100,9 +101,17 @@ export default class ExecuteRoutesRoute extends app.Route {
 
         this.routes[route._id] = route.hash
 
-        const { default: sourceMethod } = await import(sourcePath + '?update=' + route.hash)
+        const sourceFile = await import(sourcePath + '?update=' + route.hash)
+
+        const { default: sourceMethod } = sourceFile
 
         const sandbox = createSandbox()
+
+        let sourceFileProps = Object.keys(sourceFile).filter(key => key !== 'default')
+
+        for (const key of sourceFileProps) {
+          sandbox[key] = sourceFile[key]
+        }
 
         this.log.info(`[SOURCE] Running [${route.hash}] <${this.log.colors.yellow(route._id)}>`)
 
@@ -124,12 +133,21 @@ export default class ExecuteRoutesRoute extends app.Route {
       if (this.routes[route._id] !== route.hash) {
         this.log.info(`Removing route cache [${this.routes[route._id]}] <${this.log.colors.silly(route._id)}>`)
         delete this.cache[route._id]
+        delete this.cacheSource[route._id]
         return this.callRouteInstanceMethod(..._args)
       }
       try {
         this.log.info(`Running [${route.hash}] <${this.log.colors.silly(route._id)}> by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}]`)
 
         const sandbox = createSandbox()
+
+        if (this.cacheSource[route._id]) {
+          let sourceFileProps = Object.keys(this.cacheSource[route._id]).filter(key => key !== 'default')
+
+          for (const key of sourceFileProps) {
+            sandbox[key] = sourceFile[key]
+          }
+        }
 
         return await cache.call(sandbox, {args, kwargs, details})
       } catch (err) {
@@ -150,10 +168,12 @@ export default class ExecuteRoutesRoute extends app.Route {
       const filepath = path.join(route.snippetDir, `${route.hash}.js`)
       const doc = await Routes.findOne({_id: route._id})
       fs.writeFileSync(filepath, doc.getFileContent())
-      const { default: contentMethod } = await import(`${filepath}?update=${doc.hash}`)
+      const sourceFile = await import(`${filepath}?update=${doc.hash}`)
+      const { default: contentMethod } = sourceFile
 
       this.routes[route._id] = doc.hash
       this.cache[route._id] = contentMethod
+      this.cacheSource[route._id] = sourceFile
 
       return this.callRouteInstanceMethod(..._args)
     }
