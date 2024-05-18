@@ -19,7 +19,7 @@ export default class WebRouteExecuteRoute extends WebRoute {
       uri: '/route/:endpoint',
       middleware: [
         bodyParser({
-           uploadDir: './uploads',
+           uploadDir: '/tmp',
            multipart: true,
            urlencoded: true
         })
@@ -36,12 +36,12 @@ export default class WebRouteExecuteRoute extends WebRoute {
 
       app.ApplicationError.assert.object(route, `WebRouteExecuteRoute.A002: Route not found`)
 
-      const response = await app.currentSession.call(ROUTES_PREFIX + '.' + route._id, ctx.request)
+      const response = await app.currentSession.call(ROUTES_PREFIX + '.' + route._id, [], ctx.request)
 
       ctx.body = response
 
       ctx.set('Content-Type', 'json');
-      ctx.set('Status', 500);
+      ctx.set('Status', 200);
     }
     catch (err) {
       const error = app.ApplicationError.parse(err)

@@ -165,6 +165,7 @@ export function startEngine (routes, options = {}) {
       // HTTP upload routes
       join(__dirname, 'http/routes/download/index.js'),
       join(__dirname, 'http/routes/upload/index.js'),
+      join(__dirname, 'http/routes/route/index.js'),
     ])
   }
 // ----------- AUTOLOAD ROUTES ----------
