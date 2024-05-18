@@ -44,7 +44,12 @@ export default class WebRouteExecuteRoute extends WebRoute {
       ctx.set('Status', 200);
     }
     catch (err) {
-      const error = app.ApplicationError.parse(err)
+      let error = app.ApplicationError.parse(err)
+
+      if (error.code === 'wamp.error.no_such_procedure' && error.message.includes('<agent.')) {
+        error.message = 'A sua aplicação não possui um Agent do WAMP ativo'
+        error.description = 'Você pode estar tentando acessar uma rota que requer uma session do WAMP ativa para chamada de componentes'
+      }
 
       ctx.body = {
         error: error.toObject()
