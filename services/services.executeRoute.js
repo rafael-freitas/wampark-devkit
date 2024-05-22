@@ -142,7 +142,8 @@ export default class ExecuteRoutesRoute extends app.Route {
         const sandbox = createSandbox()
 
         if (this.cacheSource[route._id]) {
-          let sourceFileProps = Object.keys(this.cacheSource[route._id]).filter(key => key !== 'default')
+          const sourceFile = this.cacheSource[route._id]
+          let sourceFileProps = Object.keys(sourceFile).filter(key => key !== 'default')
 
           for (const key of sourceFileProps) {
             sandbox[key] = sourceFile[key]
