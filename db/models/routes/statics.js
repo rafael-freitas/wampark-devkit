@@ -1,11 +1,8 @@
 
-import _ from 'lodash'
 import { v5 as _uuid } from 'uuid'
 import md5 from 'md5'
 
 const MODEL_ROUTES_ENDPOINT = process.env.MODEL_ROUTES_ENDPOINT
-
-const DEFAULT_FUNCTION_NAME = '___endpoint___'
 
 export default function (modelSchema) {
   Object.assign(modelSchema.statics, {
@@ -15,47 +12,64 @@ export default function (modelSchema) {
     },
 
     generateFileContent (route) {
-      // wrapper para method async na classe atual
-      let params = ['kwargs']
-      
-      // removendo parametros duplicados
-      params = _.union(params)
 
-      // wraper da funcao
-      // assinatura: function content(kwargs, extraParams[])
-      return `${route.header}\nexport default async function ${DEFAULT_FUNCTION_NAME}({ ${params.join(', ')} }) {\n${route.content}\n}`
+      const now = new Date().toISOString()
+
+      const DEFAULT_HEADER = 
+      [
+        '/**',
+        '* @file ',
+        '* @version 0.0.0',
+        '* @since 0.0.0',
+        '* @namespace ',
+        '* @author ',
+        `* @created ${now}`,
+        '*/',
+        '',
+      ]
+      .join('\n')
+
+      let jsdoc = this.extractJSDOC(route.content)
+
+      if (!jsdoc.version) {
+        route.content = DEFAULT_HEADER + route.content
+      }
+
+      return route.content
     },
 
-    generateHash (header, content) {
+    generateHash (content) {
       if (!content) {
-        header = Date.now()
         content = Date.now()
       }
-      return _uuid(md5(header + content), _uuid.URL)
+      return _uuid(md5(content), _uuid.URL)
     },
 
-    parseFileContent(str) {
-      const regex = /^(.*?)?(\n?export default async function(.*?){?\n)(.*?)?\n}.*?/gs
-      const parts = regex.exec(str)
-
-      if (!parts) {
-        return {
-          hash: null,
-          header: str,
-          content: '// content moved to header',
+    extractJSDOC (content) {
+      const file = {};
+      const regexComments = /^\/\*\*([\s\S]*?)\*\//m;
+      const regexTag = /@(\w+)\s+([^\n*]+)/g;
+    
+      const comment = regexComments.exec(content);
+    
+      if (comment) {
+        let match;
+        while ((match = regexTag.exec(comment[1])) !== null) {
+          file[match[1]] = match[2].trim();
         }
       }
+    
+      return file;
+    },
 
-      const header = parts[1]
-      const content = parts[4]
+    parseFileContent (str) {
+      let content = String(str)
+      let file = this.extractJSDOC(content)
 
-      const hash = this.generateHash(header, content)
-      return {
-        hash,
-        header,
-        content
-      }
-
+      file.hash = this.generateHash(content)
+      file.content = content
+    
+      return file
     }
   })
 }

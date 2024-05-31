@@ -41,6 +41,48 @@ const modelSchema = new mongoose.Schema({
   },
 
   /**
+   * SEMVER version - jsdoc tag: version
+   */
+  version: {
+    type: String,
+    required: true,
+    default: '0.0.0'
+  },
+  
+  /**
+   * SEMVER since - jsdoc tag: since
+   */
+  since: {
+    type: String,
+    required: true,
+    default: '0.0.0'
+  },
+
+  /**
+   * jsdoc tag: file
+   */
+  description: {
+    type: String,
+    default: ''
+  },
+
+  /**
+   * jsdoc tag: author
+   */
+  author: {
+    type: String,
+    default: ''
+  },
+
+  /**
+   * jsdoc tag: namespace
+   */
+  namespace: {
+    type: String,
+    default: ''
+  },
+
+  /**
    * Endpoint name
    */
   endpoint: {

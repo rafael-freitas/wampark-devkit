@@ -10,7 +10,7 @@ export default function (ModelSchema) {
     },
 
     getHash () {
-      return this.constructor.generateHash(this.header, this.content)
+      return this.constructor.generateHash(this.content)
     },
   })
 }

@@ -1,184 +1,267 @@
-import app from 'wampark'
-import shell from 'shelljs'
-import path from 'path'
-import fs from 'fs'
-import _ from 'lodash'
+/**
+ * @file Execute routes
+ * @version 0.0.2
+ * @since 0.0.0
+ * @namespace services
+ * @author Rafael Freitas
+ * @created -
+ * @updated 2024-05-31 03:00:51
+ */
+import app from 'wampark';
+import shell from 'shelljs';
+import path from 'path';
+import fs from 'fs';
 
-import RouteSandbox from '../lib/RouteSandbox.js'
-import Routes from '../db/models/routes/index.js'
+import RouteSandbox from '../lib/RouteSandbox.js';
+import Routes from '../db/models/routes/index.js';
 
-const RoutesError = app.ApplicationError
+const RoutesError = app.ApplicationError;
 
-// generate random WORKER ID wether no ID is specified
-const ROUTES_WORKER_ID = process.env.ROUTES_WORKER_ID || process.pid
-
-const ROUTES_PREFIX = process.env.ROUTES_PREFIX || 'routes'
-
-const SNIPPET_DIR = path.join(path.resolve(), '.snippets')
-
-const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'routes')
-
-const ENABLE_ROUTES_SOURCE = Number(process.env.ENABLE_ROUTES_SOURCE)
+// Configurações de variáveis de ambiente
+const ROUTES_PREFIX = process.env.ROUTES_PREFIX || 'routes';
+const SNIPPET_DIR = path.join(path.resolve(), '.snippets');
+const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'routes');
+const ENABLE_ROUTES_SOURCE = Number(process.env.ENABLE_ROUTES_SOURCE);
+const ROUTES_AUTOCREATE = Number(process.env.ROUTES_AUTOCREATE);
 
 if (process.env.ROUTES_SOURCE_DIR) {
-  shell.mkdir('-p', SOURCE_DIR)
+  shell.mkdir('-p', SOURCE_DIR);
+}
+
+/**
+ * Verifica se um objeto é uma classe JavaScript.
+ * @param {Object} obj - O objeto a ser verificado.
+ * @returns {Boolean} - Retorna true se o objeto for uma classe, caso contrário false.
+ */
+function isClass(obj) {
+  // Verifica se é uma função e se tem a propriedade 'prototype'
+  const isFunction = typeof obj === 'function';
+  const hasPrototype = obj.prototype && typeof obj.prototype === 'object';
+
+  if (!isFunction || !hasPrototype) {
+    return false;
+  }
+
+  // Verifica se foi declarada com 'class'
+  const isClassDeclaration = /^class\s/.test(Function.prototype.toString.call(obj));
+
+  return isClassDeclaration;
 }
 
 export default class ExecuteRoutesRoute extends app.Route {
-  constructor () {
+  constructor() {
     super({
       type: app.RouteTypes.RPC,
       uri: ROUTES_PREFIX,
       options: {
         match: 'prefix'
       }
-    })
-    // guardar as rotas importadas e os metodos indexados por hash
-    this.routes = {}
-    this.cache = {}
-    this.cacheSource = {}
+    });
+    // Guardar as rotas importadas e os métodos indexados por hash
+    this.routes = {};
+    this.cache = {};
+    this.cacheSource = {};
   }
 
-  setup (args = [], kwargs = {}, details = {}) {
-    const [protocol = {}] = args
-    // setar sempre o chamador inicial como protocolo
+  /**
+   * Configura o contexto da rota.
+   * @param {Array} args - Argumentos passados.
+   * @param {Object} kwargs - Argumentos nomeados passados.
+   * @param {Object} details - Detalhes da chamada.
+   */
+  setup(args = [], kwargs = {}, details = {}) {
+    const [protocol = {}] = args;
+    // Setar sempre o chamador inicial como protocolo
     if (protocol.targetUser) {
       this.details = {
         caller_authid: protocol.targetUser,
         caller: protocol.targetSession,
         procedure: details.procedure,
-      }
+      };
     }
   }
 
   /**
+   * Endpoint principal para execução das rotas.
    * @ignore
-   * @param args
-   * @param kwargs
-   * @param details
+   * @param {Array} args - Argumentos passados.
+   * @param {Object} kwargs - Argumentos nomeados passados.
+   * @param {Object} details - Detalhes da chamada.
    */
-  async endpoint (args = [], kwargs = {}, details = {}) {
+  async endpoint(args = [], kwargs = {}, details = {}) {
+    const routeId = String(this.details.procedure).replace(ROUTES_PREFIX + '.', '');
 
-    const routeId = String(this.details.procedure).replace(ROUTES_PREFIX + '.', '')
+    let route = await Routes.findOne({ _id: routeId }, { _id: 1, hash: 1 }).lean();
 
-    const route = await Routes.findOne({ _id: routeId }, {_id: 1, hash: 1}).lean()
-
+    if (!route && ROUTES_AUTOCREATE) {
+      // Buscar arquivo fonte
+      route = await this.getRouteFromSourceFile(routeId);
+    }
     if (!route) {
-      throw new RoutesError(`services.executeRoute.A001: No Route found <${routeId}> uri: [${details.procedure}]`)
+      throw new RoutesError(`services.executeRoute.A001: Route not found <${routeId}> uri: [${details.procedure}]`);
     }
 
-    return this.callRouteInstanceMethod(route, args, kwargs, details)
+    return this.executeRoute(route, args, kwargs, details);
   }
 
-  async callRouteInstanceMethod (..._args) {
-    const [route, args = [], kwargs = {}, details = {}] = _args
-
-    const createSandbox = () => {
-      // create sandbox
-      const sandbox = RouteSandbox.extend(this)
-      sandbox.uri = `sandbox#${route._id}`
-      sandbox.log = sandbox.getLogger()
-      sandbox.beforeSetup(args, kwargs, details)
-      sandbox.setup(args, kwargs, details)
-      return sandbox
+  /**
+   * Obtém a rota a partir do arquivo de origem.
+   * @param {String} routeId - ID da rota.
+   * @returns {Object} - A rota encontrada.
+   */
+  async getRouteFromSourceFile(routeId) {
+    const sourcePath = path.join(SOURCE_DIR, routeId + '.js');
+    if (fs.existsSync(sourcePath)) {
+      const file = Routes.parseFileContent(fs.readFileSync(sourcePath));
+      const route = new Routes(file);
+      Object.assign(route, { endpoint: routeId });
+      await route.save();
+      return route;
     }
+  }
 
-    if (process.env.ROUTES_SOURCE_DIR && ENABLE_ROUTES_SOURCE) {
-      try {
-        const sourcePath = path.join(SOURCE_DIR, route._id + '.js')
+  /**
+   * Salva a rota no diretório de snippets.
+   * @param {Object} route - A rota a ser salva.
+   */
+  saveRouteToSnipetDirectory(route) {
+    const routeSnippetDir = path.join(SNIPPET_DIR, route._id);
+    // Limpar diretório de snippets desta rota
+    shell.rm('-rf', routeSnippetDir);
+    // Criar diretório do snippet
+    shell.mkdir('-p', routeSnippetDir);
+    // Montar path do arquivo (SNIPPET_DIR/ID/HASH)
+    const filepath = path.join(routeSnippetDir, route.hash + '.js');
+    // Gravar arquivo
+    fs.writeFileSync(filepath, route.content);
+  }
 
-        if (!fs.existsSync(sourcePath)) {
-          this.log.info(`[SOURCE] Creating.... <${this.log.colors.yellow(sourcePath)}>`)
-          const doc = await Routes.findOne({_id: route._id})
-          fs.writeFileSync(sourcePath, doc.getFileContent())
+  /**
+   * Importa a rota do diretório de snippets.
+   * @param {Object} route - A rota a ser importada.
+   * @returns {Object} - O módulo importado.
+   */
+  async importRouteFileFromSnipetDirectory(route) {
+    const filepath = path.join(SNIPPET_DIR, route._id, route.hash + '.js');
+    if (!fs.existsSync(filepath)) {
+      // Obter rota completa do banco
+      const fullRoute = await Routes.findOne({ _id: route._id }).lean();
+      // Salvar snippet no sistema de arquivos
+      this.saveRouteToSnipetDirectory(fullRoute);
+    }
+    return import(filepath + '?hash=' + route.hash);
+  }
+
+  /**
+   * Importa a rota do diretório de origem.
+   * @param {Object} route - A rota a ser importada.
+   * @returns {Object} - O módulo importado.
+   */
+  async importRouteFileFromSourceDirectory(route) {
+    const filepath = path.join(SOURCE_DIR, route._id + '.js');
+    if (!fs.existsSync(filepath)) {
+      throw new RoutesError(`services.executeRoute.A002: Route source file not found <${route._id}>`);
+    }
+    return import(filepath + '?hash=' + route.hash);
+  }
+
+  /**
+   * Executa a rota.
+   * @param {Object} route - A rota a ser executada.
+   * @param {Array} args - Argumentos passados.
+   * @param {Object} kwargs - Argumentos nomeados passados.
+   * @param {Object} details - Detalhes da chamada.
+   * @returns {Any} - O resultado da execução da rota.
+   */
+  async executeRoute(route, args, kwargs, details) {
+    // 1 - Checar se já está no cache
+    const cacheKey = route._id;
+
+    // Se não estiver no cache, carregar arquivo fonte
+    if (!this.cache[cacheKey]) {
+      let file;
+      if (ENABLE_ROUTES_SOURCE) {
+        file = await this.importRouteFileFromSourceDirectory(route);
+      } else {
+        file = await this.importRouteFileFromSnipetDirectory(route);
+      }
+
+      // Se file.default não for uma função, levantar erro
+      if (!file.default || typeof file.default !== 'function') {
+        throw new RoutesError(`services.executeRoute.A003: Route file must export a function <${route._id}>`);
+      }
+
+      // Checar se o file.default é uma classe usando isClass() e guardar a flag
+      const flagClass = isClass(file.default);
+
+      this.cache[cacheKey] = { file, hash: route.hash, flagClass };
+    } else {
+      // Se estiver no cache, verificar se o hash mudou
+      if (this.cache[cacheKey].hash !== route.hash) {
+        let file;
+        if (ENABLE_ROUTES_SOURCE) {
+          file = await this.importRouteFileFromSourceDirectory(route);
+        } else {
+          file = await this.importRouteFileFromSnipetDirectory(route);
         }
 
-        if (this.routes[route._id] !== route.hash) {
-          this.log.info(`[SOURCE] Updating... <${this.log.colors.yellow(sourcePath)}>`)
-          const doc = await Routes.findOne({_id: route._id})
-          fs.writeFileSync(sourcePath, doc.getFileContent())
+        // Se file.default não for uma função, levantar erro
+        if (!file.default || typeof file.default !== 'function') {
+          throw new RoutesError(`services.executeRoute.A004: Route file must export a function <${route._id}>`);
         }
 
-        this.routes[route._id] = route.hash
+        // Checar se o file.default é uma classe usando isClass() e guardar a flag
+        const flagClass = isClass(file.default);
 
-        const sourceFile = await import(sourcePath + '?update=' + route.hash)
-
-        const { default: sourceMethod } = sourceFile
-
-        const sandbox = createSandbox()
-
-        let sourceFileProps = Object.keys(sourceFile).filter(key => key !== 'default')
-
-        for (const key of sourceFileProps) {
-          sandbox[key] = sourceFile[key]
-        }
-
-        this.log.info(`[SOURCE] Running [${route.hash}] <${this.log.colors.yellow(route._id)}>`)
-
-        return sourceMethod.call(sandbox, {args, kwargs, details})
-
-        
-      } catch (err) {
-        if (err instanceof app.ApplicationError) {
-          throw err
-        }
-        throw RoutesError.parse(err)
+        this.cache[cacheKey] = { file, hash: route.hash, flagClass };
       }
     }
 
-    let cache = this.cache[route._id]
+    // 2 - Executar rota
+    const { file, flagClass } = this.cache[cacheKey];
+    const routeClass = file.default;
 
-    if (cache) {
-      // se o hash mudou importar o snippet novamente
-      if (this.routes[route._id] !== route.hash) {
-        this.log.info(`Removing route cache [${this.routes[route._id]}] <${this.log.colors.silly(route._id)}>`)
-        delete this.cache[route._id]
-        delete this.cacheSource[route._id]
-        return this.callRouteInstanceMethod(..._args)
+    // Verificar se routeClass é uma class ou uma function
+    if (flagClass) {
+      // Se for uma class, criar instância e chamar método
+      const instance = new routeClass({
+        uri: route._id,
+        // Copiar session do crossbar
+        session: this.session
+      });
+
+      if (!instance.session) {
+        instance.session = this.session
       }
-      try {
-        this.log.info(`Running [${route.hash}] <${this.log.colors.silly(route._id)}> by [${this.log.colors.yellow(details.caller)}/${details.caller_authid}]`)
 
-        const sandbox = createSandbox()
-
-        if (this.cacheSource[route._id]) {
-          const sourceFile = this.cacheSource[route._id]
-          let sourceFileProps = Object.keys(sourceFile).filter(key => key !== 'default')
-
-          for (const key of sourceFileProps) {
-            sandbox[key] = sourceFile[key]
-          }
-        }
-
-        return await cache.call(sandbox, {args, kwargs, details})
-      } catch (err) {
-        if (err instanceof app.ApplicationError) {
-          throw err
-        }
-        throw RoutesError.parse(err)
-  
-        // throw new RoutesError(`services.callRouteInstanceMethod.E001: <${route._id}> ${error.message}`, err)
+      // Verificar se instance é uma instância da classe Routes ou extendeu a classe Routes
+      if (instance instanceof RouteSandbox) {
+        // Chamar os métodos de configuração beforeSetup e setup passando args, kwargs e details
+        await instance.beforeSetup(args, kwargs, details);
+        await instance.setup(args, kwargs, details);
+        // Chamar método endpoint da classe Routes com os parâmetros args, kwargs, details
+        return instance.endpoint(args, kwargs, details);
+      } else {
+        // Se não for uma instância da classe Routes, levantar erro de RoutesError
+        throw new RoutesError(`services.executeRoute.E001: Route class must extend RouteSandbox`);
       }
     } else {
-      this.log.info(`Creating route sandbox [${route.hash}] <${this.log.colors.silly(route._id)}>`)
-      // criar o diretorio de snippets dinamicos de cada workflow chamado
-      route.snippetDir = path.join(SNIPPET_DIR, route._id)
-      shell.mkdir('-p', route.snippetDir)
+      // Se for uma função, criar uma instância da classe RouteSandbox
+      const sandbox = new RouteSandbox({
+        uri: route._id,
+        ...file,
+        // Copiar session do crossbar
+        session: this.session
+      });
+      
+      if (!sandbox.session) {
+        sandbox.session = this.session
+      }
 
-      // converter codigo em metodo da classe Sandbox - gravar em arquivo no diretorio .snippets/
-      const filepath = path.join(route.snippetDir, `${route.hash}.js`)
-      const doc = await Routes.findOne({_id: route._id})
-      fs.writeFileSync(filepath, doc.getFileContent())
-      const sourceFile = await import(`${filepath}?update=${doc.hash}`)
-      const { default: contentMethod } = sourceFile
-
-      this.routes[route._id] = doc.hash
-      this.cache[route._id] = contentMethod
-      this.cacheSource[route._id] = sourceFile
-
-      return this.callRouteInstanceMethod(..._args)
+      await sandbox.beforeSetup(args, kwargs, details);
+      await sandbox.setup(args, kwargs, details);
+      // Chamar método endpoint com os parâmetros args, kwargs, details
+      return sandbox.endpoint(args, kwargs, details);
     }
   }
-
 }
-

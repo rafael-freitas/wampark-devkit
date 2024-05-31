@@ -105,11 +105,10 @@ export default class SyncSourceFilesRoute extends app.Route {
         // console.log(`[${this.uri}] parsing: ${_id}`)
         const file = Routes.parseFileContent(fs.readFileSync(fullpath))
 
-        if (file.content && file.hash && route.hash !== file.hash) {
-          // console.log(`[${this.uri}] updating... ${_id} -> ${file.hash}`)
-          Object.assign(route, file)
+        if (file.hash && route.hash !== file.hash) {
+          route.set(file)
           await route.save()
-          console.log(`[${this.uri}] [UPDATE ROUTE] ${_id} -> ${route.hash}`)
+          console.log(`[${this.uri}] [ROUTE RECORD UPDATED] ${_id} -> ${route.hash}`)
         }
         return
       }
@@ -117,7 +116,7 @@ export default class SyncSourceFilesRoute extends app.Route {
         this.add(fullpath)
       }
     } catch (error) {
-      console.log(`[${this.uri}] [UPDATE ROUTE ERROR] ${_id} -> ${route.hash}`)
+      console.log(`[${this.uri}] [UPDATE ROUTE ERROR] ${_id} -> ${error.message}`, error)
     }
     console.log(`[${this.uri}] [CHANGE] ${fullpath}`)
   }
@@ -185,7 +184,7 @@ export default class SyncSourceFilesRoute extends app.Route {
       }
       else {
         if (ENABLE_ROUTES_SOURCE_SYNC_FORCE_UPDATE) {
-          console.log(`[${this.uri}] [UPDATE] force update ${route._id} -> ${route.hash}`)
+          console.log(`[${this.uri}] [SOURCE UPDATE FORCE] ${route._id} -> ${route.hash}`)
           fs.writeFileSync(sourcePath, Routes.generateFileContent(route))
         }
       }
