@@ -8,13 +8,10 @@ import chokidar from 'chokidar'
 
 import Routes from '../db/models/routes/index.js'
 
-
-const RoutesError = app.ApplicationError
-
 // generate random WORKER ID wether no ID is specified
 const ROUTES_WORKER_ID = app.config.ROUTES_WORKER_ID || process.pid
 
-const ROUTES_PREFIX = 'services.syncSourceFiles'
+const ROUTES_SYNC_SERVICE_URI = 'services.syncSourceFiles'
 
 const SOURCE_DIR = path.join(path.resolve(), process.env.ROUTES_SOURCE_DIR, 'routes')
 
@@ -33,7 +30,7 @@ export default class SyncSourceFilesRoute extends app.Route {
   constructor () {
     super({
       type: app.RouteTypes.RPC,
-      uri: ROUTES_PREFIX,
+      uri: ROUTES_SYNC_SERVICE_URI,
     })
     // guardar as rotas importadas e os metodos indexados por hash
     this.routes = {}
