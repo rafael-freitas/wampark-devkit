@@ -18,13 +18,13 @@ export default function (modelSchema) {
       const DEFAULT_HEADER = 
       [
         '/**',
-        '* @file ',
-        '* @version 0.0.0',
-        '* @since 0.0.0',
-        '* @namespace ',
-        '* @author ',
-        `* @created ${now}`,
-        '*/',
+        ' * @file ',
+        ' * @version 0.0.0',
+        ' * @since 0.0.0',
+        ' * @namespace ',
+        ' * @author ',
+        ` * @created ${now}`,
+        ' */',
         '',
       ]
       .join('\n')
