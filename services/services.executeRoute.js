@@ -1,6 +1,6 @@
 /**
  * @file Execute routes
- * @version 0.0.2
+ * @version 0.0.3
  * @since 0.0.0
  * @namespace services
  * @author Rafael Freitas
@@ -166,13 +166,16 @@ export default class ExecuteRoutesRoute extends app.Route {
   }
 
   async checkAuthorization (instance) {
-    const requireAuthentication = instance.requireAuthentication()
-    if (requireAuthentication) {
+    if (instance.isHttpRequest() && !instance.allowHttpRequest()) {
+      throw new RoutesError(`403: Forbidden for http requests`)
+    }
+    const requiresAuthentication = instance.requiresAuthentication()
+    if (requiresAuthentication) {
       if (instance.isRequestServerSession()) {
         let authorization = await instance.checkAuthorization()
 
         if (authorization === false) {
-          throw new RoutesError(`401: Unauthorized to access route <${route._id}>`);
+          throw new RoutesError(`401: Unauthorized to access this route`)
         }
       }
     }
@@ -187,7 +190,8 @@ export default class ExecuteRoutesRoute extends app.Route {
    * @returns {Any} - O resultado da execução da rota.
    */
   async executeRoute(route, args, kwargs, details) {
-    // 1 - Checar se já está no cache
+    try {
+      // 1 - Checar se já está no cache
     const cacheKey = route._id;
 
     // Se não estiver no cache, carregar arquivo fonte
@@ -280,5 +284,9 @@ export default class ExecuteRoutesRoute extends app.Route {
       // Chamar método endpoint com os parâmetros args, kwargs, details
       return sandbox.endpoint(args, kwargs, details);
     }
+    } catch (error) {
+      throw error
+    }
+    
   }
 }
