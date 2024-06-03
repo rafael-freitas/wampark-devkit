@@ -165,6 +165,19 @@ export default class ExecuteRoutesRoute extends app.Route {
     return import(filepath + '?hash=' + route.hash);
   }
 
+  async checkAuthorization (instance) {
+    const requireAuthentication = instance.requireAuthentication()
+    if (requireAuthentication) {
+      if (instance.isRequestServerSession()) {
+        let authorization = await instance.checkAuthorization()
+
+        if (authorization === false) {
+          throw new RoutesError(`401: Unauthorized to access route <${route._id}>`);
+        }
+      }
+    }
+  }
+
   /**
    * Executa a rota.
    * @param {Object} route - A rota a ser executada.
@@ -239,6 +252,8 @@ export default class ExecuteRoutesRoute extends app.Route {
         // Chamar os métodos de configuração beforeSetup e setup passando args, kwargs e details
         await instance.beforeSetup(args, kwargs, details);
         await instance.setup(args, kwargs, details);
+        // checar autorizacao de acesso
+        await this.checkAuthorization(instance)
         // Chamar método endpoint da classe Routes com os parâmetros args, kwargs, details
         return instance.endpoint(args, kwargs, details);
       } else {
@@ -260,6 +275,8 @@ export default class ExecuteRoutesRoute extends app.Route {
 
       await sandbox.beforeSetup(args, kwargs, details);
       await sandbox.setup(args, kwargs, details);
+      // checar autorizacao de acesso
+      await this.checkAuthorization(sandbox)
       // Chamar método endpoint com os parâmetros args, kwargs, details
       return sandbox.endpoint(args, kwargs, details);
     }
